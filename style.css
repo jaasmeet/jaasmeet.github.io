@@ -1,26 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Fira+Code:wght@400;500&display=swap');
+
+:root {
+  --bg: #0a0a0a;
+  --surface: #1e1e1e;
+  --text: #e0e0e0;
+  --subtle: #777;
+  --accent: #00bcd4;
+  --border: #333;
+  --shadow: rgba(0, 0, 0, 0.6);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 body {
-  background-color: #121212;
-  color: #e0e0e0;
-  font-family: 'Segoe UI', sans-serif;
-  line-height: 1.6;
   margin: 0;
   padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  line-height: 1.6;
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 a {
-  color: #00bcd4;
+  color: var(--accent);
   text-decoration: none;
+  transition: color 0.2s ease;
 }
-
 a:hover {
+  color: #33dfff;
   text-decoration: underline;
 }
 
 header {
-  background: #1f1f1f;
-  padding: 2rem;
+  background: var(--surface);
+  padding: 2rem 1rem;
   text-align: center;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 2px 4px var(--shadow);
 }
 
 main {
@@ -30,18 +50,67 @@ main {
 }
 
 article {
+  background: var(--surface);
+  padding: 1.5rem;
   margin-bottom: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px var(--shadow);
+  transition: transform 0.2s ease;
 }
+article:hover {
+  transform: translateY(-4px);
+}
+
+h1, h2, h3 {
+  color: var(--text);
+  margin-top: 0;
+}
+h1 { font-size: 2rem; }
+h2 { font-size: 1.75rem; }
+h3 { font-size: 1.5rem; }
 
 .date {
   font-size: 0.9rem;
-  color: #888;
+  color: var(--subtle);
+  margin-bottom: 1rem;
+  display: block;
+}
+
+pre, code {
+  font-family: 'Fira Code', monospace;
+  background: #222;
+  color: #f8f8f2;
+  border-radius: 4px;
+}
+code {
+  padding: 0.2rem 0.4rem;
+}
+pre {
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1rem 0;
 }
 
 footer {
+  background: var(--surface);
   text-align: center;
-  padding: 2rem;
+  padding: 2rem 1rem;
   font-size: 0.9rem;
-  border-top: 1px solid #333;
-  color: #666;
+  color: var(--subtle);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -2px 4px var(--shadow);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
 }
