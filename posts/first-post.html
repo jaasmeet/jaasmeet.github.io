@@ -2,19 +2,213 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>I AM TRYING TO LEARN EVERYTHING ABOUT LOW LATENCY C++</title>
+  <title>Memory and Performance Guide for Low-Latency C++</title>
   <link rel="stylesheet" href="../style.css">
 </head>
 <body>
   <header>
-    <h1>First Post: Understanding Ulrich Drepper's memory guide</h1>
-    <p class="date">July 13, 2025</p>
+    <h1>Memory and Performance Guide for Low-Latency C++</h1>
+    <p class="date">July 17, 2025</p>
   </header>
 
   <main>
-    <p>So im gonna read this, understand it and try implementing some code that uses this information (: https://people.freebsd.org/~lstewart/articles/cpumemory.pdf)</p>
-    <p>I am going to try spending an hour a day learning and practicing more low latency oriented development and this is day 1</p>
-    <p>BOOM</p>
+    <p>In this post, I review Ulrich Drepper's Memory Guide and present foundational concepts and C++ code examples for low-latency development.</p>
+
+    <h2>RAM Fundamentals</h2>
+    <ul>
+      <li><strong>SRAM vs DRAM</strong>
+        <p>SRAM uses six-transistor cells for cross-coupled inverters: ultra-fast (~1 ns), no refresh needed, but low density and high cost. DRAM uses one transistor plus one capacitor: slower (~50 ns), requires periodic refresh, but offers high density and low cost.</p>
+        <pre><code>// DRAM latency measurement (approximate)
+#include <chrono>
+#include <iostream>
+volatile uint32_t* dram = reinterpret_cast<volatile uint32_t*>(0x80000000);
+auto start = std::chrono::high_resolution_clock::now();
+uint32_t v = dram[0];  // DRAM read
+auto end = std::chrono::high_resolution_clock::now();
+std::cout << "DRAM read latency: "
+          << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count()
+          << " ns\n";
+</code></pre>
+        <pre><code>6‑T SRAM Cell           1‑T DRAM Cell
+     Vdd                    _____
+      |                     |   |
+   +‑[M1]‑+                 | C |
+   |      |                 |___|
+  [M2]   [M3]                 |
+   |      |                   [T]
+   +‑[M4]‑+                     |
+  BL/BL   WL                   GND
+</code></pre>
+      </li>
+      <li><strong>DRAM Organization</strong>
+        <p>DRAM is arranged in banks of rows and columns. Accessing a different row incurs a precharge, then RAS (row select), then CAS (column select), each adding delay.</p>
+        <pre><code>Bank 0        Bank 1
++------+      +------+
+|Row0  |      |Row0  |
+|Row1  |      |Row1  |
+| ...  |      | ...  |
++------+      +------+
+</code></pre>
+      </li>
+    </ul>
+
+    <h2>Memory Subsystem Architecture</h2>
+    <ul>
+      <li>
+        <p>Traditional PC architecture: CPU ↔ FSB ↔ Northbridge (memory controller) ↔ RAM; Northbridge ↔ Southbridge ↔ I/O devices. Modern CPUs integrate the memory controller on-die, replacing the FSB with point-to-point links (e.g., QPI/HT).</p>
+        <pre><code>    +-------+      +--------+
+    |  CPU  |<---->| Memory |
+    +-------+      +--------+
+         |              ^
+     FSB |              |
+         v      +---------------+
+    +------------+ Northbridge  |
+    | Southbridge|–– PCIe/SATA–—+
+    +------------+
+     /   |    \
+   USB  PCIe  SATA
+</code></pre>
+        <pre><code>// Example: list cache directories on Linux
+system("ls /sys/devices/system/cpu/cpu0/cache");
+</code></pre>
+      </li>
+    </ul>
+
+    <h2>CPU Cache Hierarchy</h2>
+    <ul>
+      <li>
+        <p>Hierarchy from fastest to slowest:</p>
+        <pre><code>[ Registers ]
+     ↓
+[  L1 Cache ]  (32 KB, 1–3 cycles)
+     ↓
+[  L2 Cache ]  (256–512 KB, ~10 cycles)
+     ↓
+[  L3 Cache ]  (2–16 MB, ~30–50 cycles)
+     ↓
+[   DRAM    ]  (GB-scale, ~50–200 ns)
+</code></pre>
+        <p>Intel’s L3 cache is <em>inclusive</em> (holds copies of all L1/L2 lines), whereas AMD’s is <em>non‑inclusive</em> (evicts lines loaded into L1/L2).</p>
+        <pre><code>#include <emmintrin.h>
+alignas(64) char buf[64];
+// Evict from L1 to force a miss
+_mm_clflush(buf);
+</code></pre>
+      </li>
+    </ul>
+
+    <h2>Cache Mapping &amp; Associativity</h2>
+    <ul>
+      <li>
+        <p>Caches are set‑associative: addresses are split into <code>tag</code>, <code>set_index</code>, and <code>block_offset</code>. Each set holds multiple "ways".</p>
+        <pre><code>Set 42 (8-way):
++--------------------------------+
+| Way 0 | Tag:0x1234 | Data       |
+| Way 1 | Tag:0x5678 | Data       |
+| ...                            |
++--------------------------------+
+</code></pre>
+        <pre><code>constexpr int BLOCK_BITS = 6;  // 64-byte lines
+constexpr int SET_BITS   = 7;  // 128 sets
+size_t addr = reinterpret_cast<size_t>(&buf[0]);
+size_t set  = (addr >> BLOCK_BITS) & ((1<<SET_BITS)-1);
+size_t tag  = addr >> (BLOCK_BITS + SET_BITS);
+</code></pre>
+      </li>
+    </ul>
+
+    <h2>Cache Coherence Protocols</h2>
+    <ul>
+      <li>
+        <p>Coherence protocols (MESI/MOESI/MESIF) maintain consistency across cores:<br>
+           M (Modified), E (Exclusive), S (Shared), I (Invalid),<br>
+           O (Owned, MOESI), F (Forward, MESIF). Avoid false sharing by aligning per-thread data to cache-line boundaries.</p>
+        <pre><code>        +------+      +------+
+   [S]  | CPU0 |<---->| CPU1 |  Shared clean
+        +------+      +------+
+                 ↑
+          Snoops/sync messages
+</code></pre>
+        <pre><code>struct alignas(64) Counter { std::atomic<int> value; };
+Counter counters[NUM_THREADS];
+</code></pre>
+      </li>
+    </ul>
+
+    <h2>Virtual Memory &amp; TLB</h2>
+    <ul>
+      <li>
+        <p>Virtual addresses are translated via multi‑level page tables (up to 4 levels); without a TLB hit, each access may incur multiple memory references. The TLB (Translation Lookaside Buffer) caches VA→PA mappings to avoid table walks.</p>
+        <pre><code>Virtual Addr [31:22] [21:12] [11:0]
+     |         |        |
+     v         v        v
+ Page Dir   Page Tbl  Offset
+     \        /
+      Physical Page Base + Offset → Physical Addr
+</code></pre>
+        <pre><code>// Map a 2 MB huge page on Linux
+void* p = mmap(nullptr, 2*1024*1024,
+               PROT_READ|PROT_WRITE,
+               MAP_PRIVATE|MAP_ANONYMOUS|MAP_HUGETLB,
+               -1, 0);
+</code></pre>
+      </li>
+    </ul>
+
+    <h2>NUMA Considerations</h2>
+    <ul>
+      <li>
+        <p>On multi-socket servers, local memory access is approximately 2× faster than remote. Use memory policies and OS APIs to control allocation:</p>
+        <pre><code>Node 0       Node 1
++------+     +------+
+| CPU0 |     | CPU1 |
+| Mem0 |     | Mem1 |
++------+     +------+
+   \\           //
+    \\ interconnect
+</code></pre>
+        <pre><code>// Allocate 1 MB on NUMA node 1
+#include <numa.h>
+void* mem = numa_alloc_onnode(1024*1024, 1);
+</code></pre>
+        <p>Memory policies (Linux/libnuma): <code>MPOL_BIND</code>, <code>MPOL_PREFERRED</code>, <code>MPOL_INTERLEAVE</code>, <code>MPOL_DEFAULT</code></p>
+      </li>
+    </ul>
+
+    <h2>Performance Optimization Techniques</h2>
+    <ul>
+      <li><strong>Data Locality:</strong> Keep related data contiguous (arrays of structs) to maximize spatial &amp; temporal reuse; align to 64 B cache lines.</li>
+      <li><strong>Software Prefetch:</strong>
+        <pre><code>for (int i = 0; i < N; i += 16) {
+  _mm_prefetch(&data[i+32], _MM_HINT_T0);
+  // Process data[i]…data[i+15]
+}
+</code></pre>
+      </li>
+      <li><strong>Non-Temporal Stores:</strong> Use streaming stores for write only buffers:
+        <pre><code>#include <immintrin.h>
+_mm_stream_ps(dst + i, src_vec);
+</code></pre>
+      </li>
+    </ul>
+
+    <h2>Programming Interfaces &amp; Tools</h2>
+    <ul>
+      <li>Cache information via <code>/sys/devices/system/cpu/cpu*/cache</code> (sysfs).</li>
+      <li>NUMA APIs: <code>mbind()</code>, <code>set_mempolicy()</code>, <code>sched_getcpu()</code>, libnuma functions.</li>
+      <li>Huge pages (2 MB/1 GB) via <code>hugetlbfs</code> to reduce TLB misses.</li>
+      <li>Profiling &amp; analysis: <code>perf</code>, <code>valgrind</code>, <code>pahole</code>, STREAM benchmark, custom microbenchmarks.
+        <pre><code>perf stat -e cache-misses,cache-references ./my_app
+</code></pre>
+      </li>
+    </ul>
+
+    <h2>Emerging Trends</h2>
+    <ul>
+      <li>Greater parallelism: more cores, SMT, requiring NUMA-aware, cache-conscious algorithms.</li>
+      <li>Advanced memory technologies: 3D-stacked DRAM (HBM), persistent memory (PMEM), Direct Cache Access (DCA), DMA engines for true zero-copy I/O.</li>
+    </ul>
+
 
     <p><a href="../index.html">← Back to blog</a></p>
   </main>
