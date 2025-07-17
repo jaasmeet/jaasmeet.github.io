@@ -12,12 +12,12 @@
   </header>
 
   <main>
-    <p>In this post, I review Ulrich Drepper's Memory Guide and present foundational concepts and C++ code examples for low-latency development.</p>
+    <p>In this post, I will read and share what I learnt from  Ulrich Drepper's Memory Guide. I will also present foundational concepts and C++ code examples for low latency development.</p>
 
     <h2>RAM Fundamentals</h2>
     <ul>
       <li><strong>SRAM vs DRAM</strong>
-        <p>SRAM uses six-transistor cells for cross-coupled inverters: ultra-fast (~1 ns), no refresh needed, but low density and high cost. DRAM uses one transistor plus one capacitor: slower (~50 ns), requires periodic refresh, but offers high density and low cost.</p>
+        <p>SRAM uses six transistor cells for cross coupled inverters: ultra-fast (~1 ns), no refresh needed, but low density and high cost. DRAM uses one transistor plus one capacitor: slower (~50 ns), requires periodic refresh, but offers high density and low cost.</p>
         <pre><code>// DRAM latency measurement (approximate)
 #include <chrono>
 #include <iostream>
@@ -55,7 +55,7 @@ std::cout << "DRAM read latency: "
     <h2>Memory Subsystem Architecture</h2>
     <ul>
       <li>
-        <p>Traditional PC architecture: CPU ↔ FSB ↔ Northbridge (memory controller) ↔ RAM; Northbridge ↔ Southbridge ↔ I/O devices. Modern CPUs integrate the memory controller on-die, replacing the FSB with point-to-point links (e.g., QPI/HT).</p>
+        <p>Traditional PC architecture: CPU <-> FSB <-> Northbridge (memory controller) <-> RAM; Northbridge <-> Southbridge <-> I/O devices. Modern CPUs integrate the memory controller on die, replacing the FSB with point to point links (Example: QPI/HT).</p>
         <pre><code>    +-------+      +--------+
     |  CPU  |<---->| Memory |
     +-------+      +--------+
@@ -88,7 +88,7 @@ system("ls /sys/devices/system/cpu/cpu0/cache");
      ↓
 [   DRAM    ]  (GB-scale, ~50–200 ns)
 </code></pre>
-        <p>Intel’s L3 cache is <em>inclusive</em> (holds copies of all L1/L2 lines), whereas AMD’s is <em>non‑inclusive</em> (evicts lines loaded into L1/L2).</p>
+        <p>Intel’s L3 cache is <em>inclusive</em> (holds copies of all L1/L2 lines), whhile AMD’s is <em>non‑inclusive</em> (evicts lines loaded into L1/L2).</p>
         <pre><code>#include <emmintrin.h>
 alignas(64) char buf[64];
 // Evict from L1 to force a miss
@@ -100,7 +100,7 @@ _mm_clflush(buf);
     <h2>Cache Mapping &amp; Associativity</h2>
     <ul>
       <li>
-        <p>Caches are set‑associative: addresses are split into <code>tag</code>, <code>set_index</code>, and <code>block_offset</code>. Each set holds multiple "ways".</p>
+        <p>Caches are set-associative: addresses are split into <code>tag</code>, <code>set_index</code>, and <code>block_offset</code>. Each set holds multiple "ways".</p>
         <pre><code>Set 42 (8-way):
 +--------------------------------+
 | Way 0 | Tag:0x1234 | Data       |
@@ -122,7 +122,7 @@ size_t tag  = addr >> (BLOCK_BITS + SET_BITS);
       <li>
         <p>Coherence protocols (MESI/MOESI/MESIF) maintain consistency across cores:<br>
            M (Modified), E (Exclusive), S (Shared), I (Invalid),<br>
-           O (Owned, MOESI), F (Forward, MESIF). Avoid false sharing by aligning per-thread data to cache-line boundaries.</p>
+           O (Owned, MOESI), F (Forward, MESIF). Avoid false sharing by aligning per thread data to cache line boundaries.</p>
         <pre><code>        +------+      +------+
    [S]  | CPU0 |<---->| CPU1 |  Shared clean
         +------+      +------+
@@ -158,7 +158,7 @@ void* p = mmap(nullptr, 2*1024*1024,
     <h2>NUMA Considerations</h2>
     <ul>
       <li>
-        <p>On multi-socket servers, local memory access is approximately 2× faster than remote. Use memory policies and OS APIs to control allocation:</p>
+        <p>On multi socket servers, local memory access is approximately 2× faster than remote. Use memory policies and OS APIs to control allocation:</p>
         <pre><code>Node 0       Node 1
 +------+     +------+
 | CPU0 |     | CPU1 |
@@ -185,7 +185,7 @@ void* mem = numa_alloc_onnode(1024*1024, 1);
 }
 </code></pre>
       </li>
-      <li><strong>Non-Temporal Stores:</strong> Use streaming stores for write only buffers:
+      <li><strong>Non Temporal Stores:</strong> Use streaming stores for write only buffers:
         <pre><code>#include <immintrin.h>
 _mm_stream_ps(dst + i, src_vec);
 </code></pre>
@@ -203,10 +203,13 @@ _mm_stream_ps(dst + i, src_vec);
       </li>
     </ul>
 
-    <h2>Emerging Trends</h2>
+    <h2>Modern Relevance:</h2>
     <ul>
-      <li>Greater parallelism: more cores, SMT, requiring NUMA-aware, cache-conscious algorithms.</li>
-      <li>Advanced memory technologies: 3D-stacked DRAM (HBM), persistent memory (PMEM), Direct Cache Access (DCA), DMA engines for true zero-copy I/O.</li>
+      <li>Learning Ulrich Drepper’s memory guide is still super relevant today because the fundamentals of how memory interacts with the CPU have not really changed at all.</li>
+      <li>Stuff like cache hierarchies, memory latency, false sharing, and data alignment still directly affect performance especially in systems programming, game engines, or anything that is considered performance critical.</li>
+      <li>Even with newer hardware the principles he explains help you write code that doesn’t accidentally become bottlenecked just because of bad memory access patterns.</li>
+      <li>This is basically a very beginner friendly guide on how the CPU works under the hood, very useful.</li>
+
     </ul>
 
 
