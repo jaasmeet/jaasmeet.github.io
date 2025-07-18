@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>WattsKernelDriver: Motivation &amp; Implementation</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header>
+    <h1>WattsKernelDriver: Motivation &amp; Implementation</h1>
+    <p class="date">July 18, 2025</p>
+  </header>
+
+  <main>
+    <!-- Section 1: Motivation & Research -->
+    <section>
+      <h2>1. Motivation &amp; Research</h2>
+      <p>
+        First, I researched how to get CPU information like temperature, voltage, and wattage. I dug into Model‑Specific Registers (MSRs) and poured over Intel and AMD manuals to understand the exact register layouts for power and energy counters. Along the way, I learned that:
+      </p>
+      <ul>
+        <li>Accessing MSRs requires Ring 0 privileges.</li>
+        <li>Many legacy APIs (WinRing0, WMI WMI‑RAPL) are now deprecated or require disabling secure boot.</li>
+        <li>To maintain compatibility with both Intel and AMD, I needed a flexible, whitelist‑based approach.</li>
+      </ul>
+      <p>So I decided to build my own KMDF driver—WattsKernelDriver—for reliable, low‑latency CPU telemetry.</p>
+
+      <pre><code>
+   +------------+        +------------+        +-----------------+
+   | User-mode  | <----> | Kernel     | <----> | MSR Registers   |
+   | Application|  IOCTL | Driver     |  __readmsr()      | (Intel/AMD)
+   +------------+        +------------+        +-----------------+
+      </code></pre>
+    </section>
+
+    <!-- Section 2: Basic Driver Layout -->
+    <section>
+      <h2>2. Basic Driver Layout</h2>
+      <p>At a high level, WattsKernelDriver implements the standard KMDF entry points and a dispatch table for IOCTLs:</p>
+      <ul>
+        <li><strong>DriverEntry</strong>  
+          <ul>
+            <li>Create the device object &amp; symbolic link</li>
+            <li>Hook up IRP_MJ_CREATE / CLOSE / CLEANUP / DEVICE_CONTROL</li>
+            <li>Register DriverUnload</li>
+          </ul>
+        </li>
+        <li><strong>DispatchCreate</strong>  
+          <ul>
+            <li>Call <code>__cpuid(0)</code> to read the 12‑byte vendor string</li>
+            <li>Set <code>machine_type</code> to Intel, AMD, or Unknown</li>
+            <li>Query <code>KeQueryMaximumProcessorCountEx</code> to support processor groups</li>
+          </ul>
+        </li>
+        <li><strong>DispatchDeviceControl</strong>  
+          <ul>
+            <li>Validate input/output buffer sizes</li>
+            <li>Switch on IOCTL code → call handler for MSR, PCI, EC, SMBus, or SMU mailbox</li>
+            <li>Complete the IRP with <code>IofCompleteRequest</code></li>
+          </ul>
+        </li>
+        <li><strong>DriverUnload</strong>  
+          <ul>
+            <li>Delete symbolic link &amp; device object</li>
+          </ul>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Section 3: Technical Details -->
+    <section>
+      <h2>3. Technical Details &amp; Edge Cases</h2>
+      <p>
+        Under the hood, each IOCTL handler deals with its own quirks:
+      </p>
+      <ul>
+        <li><strong>MSR Reads</strong>  
+          – Whitelist per‑vendor registers, pin thread to the target core, handle IRQL &amp; affinity.  
+        </li>
+        <li><strong>PCI Config Space</strong>  
+          – Call <code>HalGetBusDataByOffset</code>, cope with partial reads.  
+        </li>
+        <li><strong>Embedded Controller (EC)</strong>  
+          – Busy‑wait loops on IBF/OBF flags; no built‑in timeout.  
+        </li>
+        <li><strong>AMD SMU MMIO Mailbox</strong>  
+          – Read MSR 0xC0011020 → map MMIO → write cmd/arg → poll status → read response → unmap.  
+        </li>
+        <li><strong>SMBus Byte Read</strong>  
+          – Map/unmap per byte; expensive but simple.  
+        </li>
+      </ul>
+      <p>
+        I paid special attention to error paths (e.g. zero MSR base, insufficient resources) and added <code>DbgPrint</code> traces to make testing easier.
+      </p>
+    </section>
+
+    <!-- Section 4: User-Mode Interaction -->
+    <section>
+      <h2>4. User‑Mode Interaction</h2>
+      <p>
+        From user space, applications simply open the device and issue IOCTLs. For example, to read package energy:
+      </p>
+      <pre><code>
+HANDLE h = CreateFile(
+    L"\\\\.\\WattsKernelDriver",
+    GENERIC_READ, 0, NULL,
+    OPEN_EXISTING, 0, NULL);
+
+UINT64 energy = 0;
+DWORD bytes = 0;
+DeviceIoControl(
+    h,
+    IOCTL_RAPL_READ_PKG,
+    NULL, 0,
+    &energy, sizeof(energy),
+    &bytes, NULL);
+      </code></pre>
+      <p>
+        Handle <code>STATUS_BUFFER_TOO_SMALL</code> and <code>STATUS_INVALID_PARAMETER</code> to ensure robust clients.  
+        Now any C/C++, .NET, or scripting tool can pull CPU wattage with a simple IOCTL call.
+      </p>
+    </section>
+
+    <p><a href="../index.html">← Back to blog overview</a></p>
+  </main>
+</body>
+</html>
