@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Basic Memory and Allocation Guide for C++</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header>
+    <h1>Basic Memory and Allocation Guide for C++</h1>
+    <p class="date">July 17, 2025</p>
+  </header>
+
+  <main>
+    <p>In this post I will explain how <code>new/delete</code> vs <code>malloc/free</code> and <code>std::vector</code> interact with the CPU’s memory hierarchy and why one is faster or slower based on Ulrich Drepper’s memory guide.</p>
+
+    <h2>operator new vs malloc</h2>
+    <ul>
+      <li><strong>How they work</strong>
+        <p>When you write:</p>
+        <pre><code>int* p = new int;</code></pre>
+        <p>it calls <code>operator new(sizeof(int))</code> (typically a thin wrapper around <code>malloc</code>), then runs any constructors. In contrast:</p>
+        <pre><code>int* p = (int*)malloc(sizeof(int));</code></pre>
+        <p>goes straight to the C allocator without constructors.</p>
+      </li>
+      <li><strong>Allocator metadata &amp; cache misses</strong>
+        <p>Both allocators maintain metadata (freelists, bins, boundary tags) in DRAM. Every allocation or free often misses in L1/L2 and costs hundreds of cycles to reach main memory.</p>
+      </li>
+      <li><strong>Locking &amp; system calls</strong>
+        <p>Modern allocators serialize with locks. Contention causes cache line bouncing between cores. If the heap grows, <code>sbrk</code> or <code>mmap</code> system calls add microseconds of overhead which is far more than a few extra instructions.</p>
+      </li>
+      <li><strong>Fragmentation &amp; TLB pressure</strong>
+        <p>Many small allocations scatter your working set across pages, increasing TLB misses (~200–300 cycles each). Bulk or stack allocations keep your working set tight and TLB friendly.</p>
+      </li>
+      <li><strong>Example benchmark snippet</strong>
+        <pre><code>#include &lt;iostream&gt;
+#include &lt;chrono&gt;
+#include &lt;cstdlib&gt;
+
+constexpr size_t N = 1'000'000;
+
+int main() {
+    using namespace std::chrono;
+
+    // new/delete
+    auto t0 = high_resolution_clock::now();
+    for (size_t i = 0; i < N; ++i) {
+        int* p = new int(42);
+        delete p;
+    }
+    auto t1 = high_resolution_clock::now();
+    std::cout << "new/delete: "
+              << duration_cast<milliseconds>(t1 - t0).count()
+              << " ms\n";
+
+    // malloc/free
+    auto t2 = high_resolution_clock::now();
+    for (size_t i = 0; i < N; ++i) {
+        int* p = (int*)malloc(sizeof(int));
+        *p = 42;
+        free(p);
+    }
+    auto t3 = high_resolution_clock::now();
+    std::cout << "malloc/free: "
+              << duration_cast<milliseconds>(t3 - t2).count()
+              << " ms\n";
+}
+</code></pre>
+      </li>
+    </ul>
+
+    <h2>std::vector Growth: push_back vs reserve</h2>
+    <ul>
+      <li><strong>Without reserve</strong>
+        <p>Each time capacity is exhausted, <code>vector</code> doubles its buffer:</p>
+        <ol>
+          <li>Allocate new block (calls <code>malloc</code>).</li>
+          <li>Copy all existing elements (cache misses, eviction).</li>
+          <li>Free old block (metadata hit again).</li>
+        </ol>
+      </li>
+      <li><strong>With reserve</strong>
+        <p>By calling <code>reserve(N)</code> up front:</p>
+        <ul>
+          <li>One single allocation cost.</li>
+          <li>No repeated copies or frees.</li>
+          <li>Excellent spatial locality—neighbors stay in the same cache lines.</li>
+        </ul>
+      </li>
+      <li><strong>Example benchmark snippet</strong>
+        <pre><code>#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;chrono&gt;
+
+constexpr size_t N = 1'000'000;
+
+int main() {
+    using namespace std::chrono;
+
+    // no reserve
+    auto s0 = high_resolution_clock::now();
+    std::vector<int> v1;
+    for (size_t i = 0; i < N; ++i) v1.push_back(i);
+    auto s1 = high_resolution_clock::now();
+    std::cout << "push_back (no reserve): "
+              << duration_cast<milliseconds>(s1 - s0).count()
+              << " ms\n";
+
+    // with reserve
+    auto s2 = high_resolution_clock::now();
+    std::vector<int> v2;
+    v2.reserve(N);
+    for (size_t i = 0; i < N; ++i) v2.push_back(i);
+    auto s3 = high_resolution_clock::now();
+    std::cout << "push_back (with reserve): "
+              << duration_cast<milliseconds>(s3 - s2).count()
+              << " ms\n";
+}
+</code></pre>
+      </li>
+    </ul>
+
+    <h2>Compute vs Memory Gap</h2>
+    <ul>
+      <li><p>Memory latency dwarfs compute:</p>
+        <pre><code>[   L1 cache   ] 1–4 cycles
+[   L2 cache   ] ~10 cycles
+[   L3 cache   ] ~30–50 cycles
+[ Main memory ] ~200–300 cycles
+</code></pre>
+      </li>
+      <li><p>Even a perfectly inlined 10‑cycle function can’t compete with a single DRAM miss (~250 cycles).</p></li>
+      <li><p>Reducing allocator metadata churn, lock contention, and realloc‑and‑copy steps saves far more time than micro‑tweaks to instruction streams.</p></li>
+    </ul>
+
+    <h2>Practical Recommendations</h2>
+    <ul>
+      <li>Use <strong>bulk allocations</strong> (e.g. <code>reserve</code>) instead of many small ones.</li>
+      <li>Prefer <strong>stack or arena allocators</strong> for temporary data.</li>
+      <li>Batch small allocations to minimize fragmentation and lock contention.</li>
+    </ul>
+                
+ <pre><code>
++------------------------------+--------------------------------------------+------------------------------------------------+--------------------------------------------------+
+| Mechanism                    | Overhead                                   | Performance Tips                                 | Best Use Case                                  |
++------------------------------+--------------------------------------------+------------------------------------------------+--------------------------------------------------+
+| operator new / delete        | • Heap metadata access                     | • Batch small allocations                        | • Occasional C++ objects needing ctors         |
+|                              | • Constructor/destructor calls             | • Consider stack or arena allocators             | • Unpredictable allocation points              |
++------------------------------+--------------------------------------------+------------------------------------------------+--------------------------------------------------+
+| malloc / free                | • Heap metadata access                     | • Use for POD data or C interop                  | • Raw buffers or C‑style code paths            |
+|                              | • Lock contention in multithreaded programs| • Batch via custom arena or pool                 | • Few, simple allocations                      |
++------------------------------+--------------------------------------------+------------------------------------------------+--------------------------------------------------+
+| vector.push_back (no reserve)| • Repeated realloc + copy                  | • Call reserve(N) when N is known                | • Rapid prototyping or small N                 |
+|                              | • Cache line & TLB thrash                  | • Minimize number of growth phases               |                                                |
++------------------------------+--------------------------------------------+------------------------------------------------+--------------------------------------------------+
+| vector.reserve + push_back   | • Single upfront allocation                | • Leverage spatial locality                      | • Large, fixed‑size arrays                     |
+|                              | • Excellent contiguous layout              | • Align to cache‑line (64 B)                     | • High performance loops with known N          |
++------------------------------+--------------------------------------------+------------------------------------------------+--------------------------------------------------+
+| Stack / Arena Allocators     | • No heap metadata overhead                | • Use for temporaries; scope‑based lifetimes     | • Short lived, high frequency allocations      |
++------------------------------+--------------------------------------------+------------------------------------------------+--------------------------------------------------+
+| Batched Small Allocations    | • Fragmentation & TLB pressure             | • Group related allocations into pools           | • High throughput allocation patterns          |
+|                              | • Lock bouncing between cores              | • Reduce lock contention with per‑thread arenas  |                                                |
++------------------------------+--------------------------------------------+------------------------------------------------+--------------------------------------------------+
+    </code></pre>
+                
+    <p><a href="../index.html">← Back to blog</a></p>
+  </main>
+</body>
+</html>
