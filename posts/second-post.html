@@ -24,6 +24,7 @@
         <li>There are many limitations when trying to access telemetry information on MSRs for Mobile CPUs (laptops)</li>
       </ul>
       <p>So I decided to build my own KMDF driver reliable, low‑latency CPU telemetry as other solutions would have required sign testing and secure boot disabled anyway.</p>
+      <p>This is just a super summarized, high level view of the basic layout of my driver. This was developed specifically with Intel and AMD CPU wattage monitoring in mind.</p>
 
       <pre><code>
    +------------+        +------------+        +-----------------+
