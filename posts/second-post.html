@@ -25,6 +25,7 @@
       </ul>
       <p>So I decided to build my own KMDF driver reliable, low‑latency CPU telemetry as other solutions would have required sign testing and secure boot disabled anyway.</p>
       <p>This is just a super summarized, high level view of the basic layout of my driver. This was developed specifically with Intel and AMD CPU wattage monitoring in mind.</p>
+      <p>While I have added extra features such as SMU mailing and EC access, most of them were unable to be utilized due to this being only deployed on mobile CPUs</p>
 
       <pre><code>
    +------------+        +------------+        +-----------------+
