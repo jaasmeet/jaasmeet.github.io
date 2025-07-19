@@ -16,14 +16,14 @@
     <section>
       <h2>1. Motivation &amp; Research</h2>
       <p>
-        First, I researched how to get CPU information like temperature, voltage, and wattage. I dug into Model‑Specific Registers (MSRs) and poured over Intel and AMD manuals to understand the exact register layouts for power and energy counters. Along the way, I learned that:
+        First, I researched how to get CPU information like temperature, voltage, and wattage. I studied Model Specific Registers (MSRs) and read Intel and AMD manuals to understand the exact register layouts for power and energy counters. Along the way, I learned that:
       </p>
       <ul>
         <li>Accessing MSRs requires Ring 0 privileges.</li>
         <li>Many legacy APIs (WinRing0, WMI WMI‑RAPL) are now deprecated or require disabling secure boot.</li>
-        <li>To maintain compatibility with both Intel and AMD, I needed a flexible, whitelist‑based approach.</li>
+        <li>There are many limitations when trying to access telemetry information on MSRs for Mobile CPUs (laptops)</li>
       </ul>
-      <p>So I decided to build my own KMDF driver—WattsKernelDriver—for reliable, low‑latency CPU telemetry.</p>
+      <p>So I decided to build my own KMDF driver reliable, low‑latency CPU telemetry as other solutions would have required sign testing and secure boot disabled anyway.</p>
 
       <pre><code>
    +------------+        +------------+        +-----------------+
