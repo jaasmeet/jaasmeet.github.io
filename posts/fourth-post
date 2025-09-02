@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>C++ Concurrency Core Concepts: Processes, Threads, and Memory Model</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header>
+    <h1>C++ Concurrency Core Concepts: Processes, Threads, and Memory Model</h1>
+    <p class="date">September 2, 2025</p>
+  </header>
+
+  <main>
+    <p>In this post I will explain the fundamental building blocks of concurrency in C++:
+       processes vs threads, memory models &amp; synchronization, and the C++ memory model.
+       To reinforce these concepts, I’ll also provide step-by-step coding exercises you can try.</p>
+
+    <h2>Processes vs Threads</h2>
+    <ul>
+      <li><strong>Processes</strong>
+        <p>Independent execution units with their <em>own memory space</em>. Context switching is expensive because the OS must update MMU state. Processes are great for isolation (e.g., Chrome tabs).</p>
+      </li>
+      <li><strong>Threads</strong>
+        <p>Multiple execution units within the same process, sharing memory space. Cheaper than processes, but introduce risks like race conditions.</p>
+      </li>
+      <li><strong>Example</strong>
+        <pre><code>#include &lt;iostream&gt;
+#include &lt;thread&gt;
+
+void worker(int id) {
+    std::cout &lt;&lt; "Hello from thread " &lt;&lt; id &lt;&lt; "\n";
+}
+
+int main() {
+    std::thread t1(worker, 1);
+    std::thread t2(worker, 2);
+
+    t1.join();
+    t2.join();
+}
+</code></pre>
+      </li>
+    </ul>
+
+    <h2>Memory Models &amp; Synchronization</h2>
+    <ul>
+      <li><strong>Race Condition</strong>
+        <p>Two threads modify shared state at the same time without coordination. Example: two threads incrementing a counter.</p>
+      </li>
+      <li><strong>Deadlock</strong>
+        <p>Two threads wait forever on each other’s locks.</p>
+      </li>
+      <li><strong>Livelock</strong>
+        <p>Threads keep reacting to each other but make no progress (like two people stepping left/right repeatedly in a hallway).</p>
+      </li>
+      <li><strong>False Sharing</strong>
+        <p>Two threads update different variables that live in the same CPU cache line. Causes unnecessary cache invalidations.</p>
+      </li>
+      <li><strong>Memory Barriers &amp; Cache Coherence</strong>
+        <p>Modern CPUs reorder instructions. Memory barriers enforce ordering and visibility.</p>
+      </li>
+    </ul>
+
+    <h2>The C++ Memory Model</h2>
+    <ul>
+      <li><strong>volatile</strong>
+        <p>Not for threading. Prevents compiler optimizations but does not prevent CPU reordering or guarantee visibility between threads.</p>
+      </li>
+      <li><strong>std::atomic</strong>
+        <p>Ensures safe concurrent access. Provides memory ordering guarantees (relaxed, acquire, release, sequential consistency).</p>
+      </li>
+    </ul>
+
+    <h2>Guided Coding Exercises</h2>
+
+    <h3>Exercise 1: Race Condition</h3>
+    <pre><code>#include &lt;iostream&gt;
+#include &lt;thread&gt;
+
+int counter = 0;
+
+void increment() {
+    for (int i = 0; i &lt; 1000000; i++)
+        counter++;
+}
+
+int main() {
+    std::thread t1(increment);
+    std::thread t2(increment);
+
+    t1.join();
+    t2.join();
+
+    std::cout &lt;&lt; "Final counter = " &lt;&lt; counter &lt;&lt; "\n";
+}
+</code></pre>
+
+    <h3>Exercise 2: Fix with std::mutex</h3>
+    <pre><code>#include &lt;iostream&gt;
+#include &lt;thread&gt;
+#include &lt;mutex&gt;
+
+int counter = 0;
+std::mutex mtx;
+
+void increment() {
+    for (int i = 0; i &lt; 1000000; i++) {
+        std::lock_guard&lt;std::mutex&gt; lock(mtx);
+        counter++;
+    }
+}
+
+int main() {
+    std::thread t1(increment);
+    std::thread t2(increment);
+
+    t1.join();
+    t2.join();
+
+    std::cout &lt;&lt; "Final counter = " &lt;&lt; counter &lt;&lt; "\n";
+}
+</code></pre>
+
+    <h3>Exercise 3: Use std::atomic</h3>
+    <pre><code>#include &lt;iostream&gt;
+#include &lt;thread&gt;
+#include &lt;atomic&gt;
+
+std::atomic&lt;int&gt; counter(0);
+
+void increment() {
+    for (int i = 0; i &lt; 1000000; i++)
+        counter++;
+}
+
+int main() {
+    std::thread t1(increment);
+    std::thread t2(increment);
+
+    t1.join();
+    t2.join();
+
+    std::cout &lt;&lt; "Final counter = " &lt;&lt; counter &lt;&lt; "\n";
+}
+</code></pre>
+
+    <h3>Exercise 4: Relaxed Memory Order</h3>
+    <pre><code>#include &lt;iostream&gt;
+#include &lt;thread&gt;
+#include &lt;atomic&gt;
+
+std::atomic&lt;int&gt; flag(0);
+std::atomic&lt;int&gt; data(0);
+
+void writer() {
+    data.store(42, std::memory_order_relaxed);
+    flag.store(1, std::memory_order_relaxed);
+}
+
+void reader() {
+    while (flag.load(std::memory_order_relaxed) == 0) {
+        // spin
+    }
+    std::cout &lt;&lt; "Reader sees data = " &lt;&lt; data.load(std::memory_order_relaxed) &lt;&lt; "\n";
+}
+
+int main() {
+    std::thread t1(writer);
+    std::thread t2(reader);
+
+    t1.join();
+    t2.join();
+}
+</code></pre>
+
+    <h3>Exercise 5: Acquire–Release Fix</h3>
+    <pre><code>#include &lt;iostream&gt;
+#include &lt;thread&gt;
+#include &lt;atomic&gt;
+
+std::atomic&lt;int&gt; flag(0);
+std::atomic&lt;int&gt; data(0);
+
+void writer() {
+    data.store(42, std::memory_order_relaxed);
+    flag.store(1, std::memory_order_release); // release
+}
+
+void reader() {
+    while (flag.load(std::memory_order_acquire) == 0) { // acquire
+        // spin
+    }
+    std::cout &lt;&lt; "Reader sees data = " &lt;&lt; data.load(std::memory_order_relaxed) &lt;&lt; "\n";
+}
+
+int main() {
+    std::thread t1(writer);
+    std::thread t2(reader);
+
+    t1.join();
+    t2.join();
+}
+</code></pre>
+
+    <h2>Takeaways</h2>
+    <ul>
+      <li><strong>Exercise 1</strong>: Why races are dangerous.</li>
+      <li><strong>Exercise 2</strong>: Locks enforce correctness but add overhead.</li>
+      <li><strong>Exercise 3</strong>: Atomics provide efficient lock-free safety.</li>
+      <li><strong>Exercise 4</strong>: Relaxed atomics do not guarantee ordering.</li>
+      <li><strong>Exercise 5</strong>: Acquire/release enforces visibility order correctly.</li>
+    </ul>
+
+    <p><a href="../index.html">← Back to blog</a></p>
+  </main>
+</body>
+</html>
