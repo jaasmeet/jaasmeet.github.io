@@ -154,7 +154,7 @@ int main() {
 |                              | • Cache line & TLB thrash                  | • Minimize number of growth phases               |                                                |
 +------------------------------+--------------------------------------------+------------------------------------------------+--------------------------------------------------+
 | vector.reserve + push_back   | • Single upfront allocation                | • Leverage spatial locality                      | • Large, fixed‑size arrays                     |
-|                              | • Excellent contiguous layout              | • Align to cache‑line (64 B)                     | • High performance loops with known N          |
+|                              | • Excellent contiguous layout              | • Align to cache‑line (64 B)                      | • High performance loops with known N          |
 +------------------------------+--------------------------------------------+------------------------------------------------+--------------------------------------------------+
 | Stack / Arena Allocators     | • No heap metadata overhead                | • Use for temporaries; scope‑based lifetimes     | • Short lived, high frequency allocations      |
 +------------------------------+--------------------------------------------+------------------------------------------------+--------------------------------------------------+
