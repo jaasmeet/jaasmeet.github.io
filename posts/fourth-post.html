@@ -12,14 +12,14 @@
   </header>
 
   <main>
-    <p>In this post I will explain the fundamental building blocks of concurrency in C++:
+    <p>In this post I will explain the fundamentals of concurrency in C++:
        processes vs threads, memory models &amp; synchronization, and the C++ memory model.
-       To reinforce these concepts, I’ll also provide step-by-step coding exercises you can try.</p>
+       I’ll also provide example code you can try.</p>
 
     <h2>Processes vs Threads</h2>
     <ul>
       <li><strong>Processes</strong>
-        <p>Independent execution units with their <em>own memory space</em>. Context switching is expensive because the OS must update MMU state. Processes are great for isolation (e.g., Chrome tabs).</p>
+        <p>Independent execution units with their <em>own memory space</em>. Context switching is expensive because the OS must update MMU (Memory Management Unit) state. Processes are great for isolation (e.g., Chrome tabs).</p>
       </li>
       <li><strong>Threads</strong>
         <p>Multiple execution units within the same process, sharing memory space. Cheaper than processes, but introduce risks like race conditions.</p>
@@ -40,8 +40,29 @@ int main() {
     t2.join();
 }
 </code></pre>
+          <ol>
+      <li><strong>Two threads are created:</strong>
+        <ul>
+          <li><code>t1</code> runs <code>worker(1)</code>.</li>
+          <li><code>t2</code> runs <code>worker(2)</code>.</li>
+        </ul>
       </li>
-    </ul>
+      <li><strong>Each thread prints its message:</strong>
+        <ul>
+          <li>Example outputs:</li>
+        </ul>
+        <pre><code class="language-cpp">
+Hello from thread 1
+Hello from thread 2
+</code></pre>
+        <ul>
+          <li>But the <em>order is not guaranteed</em>. Sometimes thread 2 may print before thread 1, because the OS scheduler decides which thread runs first.</li>
+        </ul>
+      </li>
+      <li><code>t1.join()</code> and <code>t2.join()</code> ensure the main program waits for both threads to finish before exiting.</li>
+    </ol>
+  </li>
+</ul>
 
     <h2>Memory Models &amp; Synchronization</h2>
     <ul>
