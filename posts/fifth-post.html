@@ -8,45 +8,45 @@
 <body>
   <header>
     <h1>Core Algorithms Cheat Sheet: Sorting, Graphs, Greedy, DP, Strings, NP</h1>
-    <p class="date">August 20, 2025</p>
+    <p class="date">November 20, 2025</p>
   </header>
 
   <main>
     <p>
-      This post is a compact overview of core algorithms and analysis techniques you’re likely
-      to see in CS courses and interviews:
-      sorting, graphs, union-find and MST, greedy vs dynamic programming, string matching,
-      and a quick intro to NP.
+      This is an overview of core algorithms and analysis techniques likely
+      seen in CS courses:
+      sorting, graphs, unionfind and MST, greedy vs dynamic programming, string matching,
+      and an intro to NP.
     </p>
 
     <h2>Asymptotic Analysis & Techniques</h2>
     <ul>
-      <li><strong>Big-O, Big-Theta, Big-Omega</strong>
+      <li><strong>Big O, Big Theta, Big Omega</strong>
         <p>
           Describe how runtime or memory grows with input size <code>n</code>.
-          For algorithms we usually care about worst-case <strong>O(…)</strong>.
+          For algorithms we care about the worst case <strong>O(…)</strong>.
         </p>
       </li>
       <li><strong>Common runtimes</strong>
         <ul>
-          <li>O(1) – constant</li>
-          <li>O(log n) – binary search</li>
-          <li>O(n) – linear scan</li>
-          <li>O(n log n) – good comparison sorts, many divide &amp; conquer algorithms</li>
-          <li>O(n²) – simple nested loops (naive DP, insertion sort worst case)</li>
-          <li>O(2ⁿ), O(n!) – exponential / factorial (brute force subset / permutation search)</li>
+          <li>O(1) -> constant</li>
+          <li>O(log n) -> binary search</li>
+          <li>O(n) -> linear scan</li>
+          <li>O(n log n) -> good comparison sorts, many divide &amp; conquer algorithms</li>
+          <li>O(n²) -> simple nested loops (naive DP, insertion sort worst case)</li>
+          <li>O(2ⁿ), O(n!) -> exponential / factorial (brute force subset / permutation search)</li>
         </ul>
       </li>
       <li><strong>Recurrences</strong>
         <p>
-          Divide &amp; conquer algorithms are often expressed as recurrences, e.g.
+          Divide &amp; conquer algorithms are often expressed as recurrences
           <code>T(n) = 2T(n/2) + O(n)</code> for mergesort, solved using the Master theorem.
         </p>
       </li>
       <li><strong>Amortized analysis</strong>
         <p>
           Average cost per operation over a sequence, even if single operations may be expensive
-          (example: dynamic array resize, union-find path compression).
+          (example: dynamic array resize, unionfind path compression).
         </p>
       </li>
     </ul>
@@ -193,8 +193,8 @@ void heapsort(std::vector&lt;int&gt;& a) {
     <ul>
       <li><strong>Representation</strong>
         <ul>
-          <li>Adjacency list: <code>vector&lt;vector&lt;int&gt;&gt;</code> – good for sparse graphs.</li>
-          <li>Adjacency matrix: <code>vector&lt;vector&lt;bool&gt;&gt;</code> – simple, but O(n²) memory.</li>
+          <li>Adjacency list: <code>vector&lt;vector&lt;int&gt;&gt;</code> - good for sparse graphs.</li>
+          <li>Adjacency matrix: <code>vector&lt;vector&lt;bool&gt;&gt;</code> - simple, but O(n²) memory.</li>
         </ul>
       </li>
       <li><strong>BFS (Breadth-First Search)</strong>
@@ -279,7 +279,7 @@ std::vector&lt;int&gt; dijkstra(
     return dist;
 }</code></pre>
 
-    <h2>Union-Find (Disjoint Set Union, DSU)</h2>
+    <h2>unionfind (Disjoint Set Union, DSU)</h2>
     <ul>
       <li><strong>Purpose</strong>
         <p>
@@ -325,17 +325,17 @@ std::vector&lt;int&gt; dijkstra(
       all vertices with minimum total weight and no cycles.
     </p>
 
-    <h3>Kruskal's Algorithm (with Union-Find)</h3>
+    <h3>Kruskal's Algorithm (with unionfind)</h3>
     <ul>
       <li><strong>Idea</strong>
         <ol>
           <li>Sort all edges by weight.</li>
           <li>Process edges from smallest to largest.</li>
-          <li>Add an edge if it connects two different components (no cycle), using union-find.</li>
+          <li>Add an edge if it connects two different components (no cycle), using unionfind.</li>
         </ol>
       </li>
       <li><strong>Complexity</strong>
-        <p>O(E log E) due to sorting; union-find operations are almost O(1).</p>
+        <p>O(E log E) due to sorting; unionfind operations are almost O(1).</p>
       </li>
     </ul>
     <pre><code class="language-cpp">struct Edge {
@@ -504,9 +504,9 @@ int max_non_overlapping(std::vector&lt;Interval&gt; intervals) {
       </li>
       <li><strong>Better algorithms</strong>
         <ul>
-          <li><strong>KMP (Knuth–Morris–Pratt)</strong>: builds prefix-function, O(n + m).</li>
-          <li><strong>Boyer–Moore / Boyer–Moore–Horspool</strong>: skips ahead using character heuristics, good in practice.</li>
-          <li><strong>Aho–Corasick</strong>: multi-pattern matching, builds automaton (trie + failure links).</li>
+          <li><strong>KMP (Knuth-Morris-Pratt)</strong>: builds prefix-function, O(n + m).</li>
+          <li><strong>Boyer-Moore / Boyer-Moore-Horspool</strong>: skips ahead using character heuristics, good in practice.</li>
+          <li><strong>Aho-Corasick</strong>: multi-pattern matching, builds automaton (trie + failure links).</li>
         </ul>
       </li>
     </ul>
@@ -607,10 +607,10 @@ std::vector&lt;int&gt; kmp_search(
     <ul>
       <li><strong>Sorting</strong>: Know insertion sort (concept), mergesort, quicksort, heapsort and their <em>time/space</em> trade-offs.</li>
       <li><strong>Graphs</strong>: Comfort with BFS/DFS, Dijkstra, topological sort, and basic representations.</li>
-      <li><strong>MST + Union-Find</strong>: Kruskal uses union-find; Prim is an alternative based on greedy expansion.</li>
+      <li><strong>MST + unionfind</strong>: Kruskal uses unionfind; Prim is an alternative based on greedy expansion.</li>
       <li><strong>Greedy vs DP</strong>: Greedy = local choices, DP = explicit subproblem states &amp; transitions.</li>
       <li><strong>String Matching</strong>: Naive is simple; KMP and BM/BMH/AC matter when performance matters.</li>
-      <li><strong>Complexity &amp; NP</strong>: Understand big-O, recurrences, and the high-level meaning of P, NP, NP-complete.</li>
+      <li><strong>Complexity &amp; NP</strong>: Understand Big O, recurrences, and the high-level meaning of P, NP, NP-complete.</li>
     </ul>
 
     <p><a href="../index.html">← Back to blog</a></p>
