@@ -14,7 +14,7 @@
   <main>
     <p>
       This is an overview of core algorithms and analysis techniques likely
-      seen in CS courses:
+      seen in CS:
       sorting, graphs, unionfind and MST, greedy vs dynamic programming, string matching,
       and an intro to NP.
     </p>
@@ -58,14 +58,14 @@
       <li><strong>Idea</strong>
         <p>
           Build the sorted array one element at a time by inserting each element into the
-          already-sorted prefix.
+          already sorted prefix.
         </p>
       </li>
       <li><strong>Complexity</strong>
         <ul>
           <li>Best: O(n) (already sorted)</li>
           <li>Average/Worst: O(n²)</li>
-          <li>In-place, stable</li>
+          <li>In place, stable</li>
         </ul>
       </li>
       <li><strong>C++ example</strong></li>
@@ -93,7 +93,7 @@
       <li><strong>Complexity</strong>
         <ul>
           <li>Always O(n log n)</li>
-          <li>Stable, not in-place (needs O(n) extra space)</li>
+          <li>Stable, not in place (needs O(n) extra space)</li>
         </ul>
       </li>
     </ul>
@@ -130,7 +130,7 @@ void mergesort(std::vector&lt;int&gt;& a, int l, int r) {
         <ul>
           <li>Average: O(n log n)</li>
           <li>Worst: O(n²) (bad pivot choices, e.g. sorted input with naive pivot)</li>
-          <li>In-place, not stable; great constants → used in practice</li>
+          <li>In place, not stable; great constants -> used in practice</li>
         </ul>
       </li>
     </ul>
@@ -158,13 +158,13 @@ void quicksort(std::vector&lt;int&gt;& a, int l, int r) {
     <ul>
       <li><strong>Idea</strong>
         <p>
-          Build a max-heap from the array, repeatedly extract the maximum to the end.
+          Build a max heap from the array, repeatedly extract the maximum to the end.
         </p>
       </li>
       <li><strong>Complexity</strong>
         <ul>
-          <li>O(n log n) worst-case</li>
-          <li>In-place, not stable</li>
+          <li>O(n log n) worst case</li>
+          <li>In place, not stable</li>
         </ul>
       </li>
     </ul>
@@ -193,16 +193,16 @@ void heapsort(std::vector&lt;int&gt;& a) {
     <ul>
       <li><strong>Representation</strong>
         <ul>
-          <li>Adjacency list: <code>vector&lt;vector&lt;int&gt;&gt;</code> - good for sparse graphs.</li>
-          <li>Adjacency matrix: <code>vector&lt;vector&lt;bool&gt;&gt;</code> - simple, but O(n²) memory.</li>
+          <li>Adjacency list: <code>vector&lt;vector&lt;int&gt;&gt;</code> -> good for sparse graphs.</li>
+          <li>Adjacency matrix: <code>vector&lt;vector&lt;bool&gt;&gt;</code> -> simple, but O(n²) memory.</li>
         </ul>
       </li>
-      <li><strong>BFS (Breadth-First Search)</strong>
+      <li><strong>BFS (Breadth First Search)</strong>
         <p>
-          Level-by-level traversal using a queue. Finds shortest path in unweighted graphs.
+          Level by level traversal using a queue. Finds shortest path in unweighted graphs.
         </p>
       </li>
-      <li><strong>DFS (Depth-First Search)</strong>
+      <li><strong>DFS (Depth First Search)</strong>
         <p>
           Goes as deep as possible along each branch using recursion or a stack.
           Used for cycle detection, topological sort, connected components.
@@ -236,7 +236,7 @@ void heapsort(std::vector&lt;int&gt;& a) {
     <ul>
       <li><strong>Use case</strong>
         <p>
-          Single-source shortest paths on a weighted graph with non-negative edge weights.
+          Single source shortest paths on a weighted graph with non negative edge weights.
         </p>
       </li>
       <li><strong>Complexity</strong>
@@ -246,7 +246,7 @@ void heapsort(std::vector&lt;int&gt;& a) {
       </li>
       <li><strong>Key idea</strong>
         <p>
-          Greedily expand the node with the smallest current distance; once popped from the
+          Greedily expand the node with the smallest current distance, once popped from the
           priority queue, its distance is final.
         </p>
       </li>
@@ -335,7 +335,7 @@ std::vector&lt;int&gt; dijkstra(
         </ol>
       </li>
       <li><strong>Complexity</strong>
-        <p>O(E log E) due to sorting; unionfind operations are almost O(1).</p>
+        <p>O(E log E) due to sorting, unionfind operations are almost O(1).</p>
       </li>
     </ul>
     <pre><code class="language-cpp">struct Edge {
@@ -375,7 +375,7 @@ int kruskal(int n, std::vector&lt;Edge&gt; edges) {
     <ul>
       <li><strong>Use case</strong>
         <p>
-          Ordering of vertices in a directed acyclic graph (DAG) so every edge u→v
+          Ordering of vertices in a directed acyclic graph (DAG) so every edge u->v
           goes from earlier to later in the order.
         </p>
       </li>
@@ -384,8 +384,8 @@ int kruskal(int n, std::vector&lt;Edge&gt; edges) {
       </li>
       <li><strong>Algorithms</strong>
         <ul>
-          <li>DFS-based: push node to list after exploring all neighbors, then reverse list.</li>
-          <li>Kahn’s algorithm: repeatedly remove nodes with in-degree 0.</li>
+          <li>DFS based: push node to list after exploring all neighbors, then reverse list.</li>
+          <li>Kahn’s algorithm: repeatedly remove nodes with in degree 0.</li>
         </ul>
       </li>
     </ul>
@@ -424,14 +424,14 @@ std::vector&lt;int&gt; topo_sort(const std::vector&lt;std::vector&lt;int&gt;&gt;
       </li>
       <li><strong>Examples</strong>
         <ul>
-          <li>Interval scheduling (select maximum number of non-overlapping intervals).</li>
+          <li>Interval scheduling (select maximum number of non overlapping intervals).</li>
           <li>Activity selection, Huffman coding, MST (Kruskal, Prim), Dijkstra.</li>
         </ul>
       </li>
     </ul>
 
     <h3>Greedy Example: Interval Scheduling</h3>
-    <p>Choose maximum number of non-overlapping intervals by sorting by end time.</p>
+    <p>Choose maximum number of non overlapping intervals by sorting by end time.</p>
     <pre><code class="language-cpp">struct Interval {
     int start, end;
 };
@@ -457,7 +457,7 @@ int max_non_overlapping(std::vector&lt;Interval&gt; intervals) {
     <ul>
       <li><strong>Key ideas</strong>
         <ul>
-          <li>Optimal substructure: optimal solution is composed of optimal sub-solutions.</li>
+          <li>Optimal substructure: optimal solution is composed of optimal sub solutions.</li>
           <li>Overlapping subproblems: same subproblems appear many times.</li>
         </ul>
       </li>
@@ -469,13 +469,13 @@ int max_non_overlapping(std::vector&lt;Interval&gt; intervals) {
       </li>
       <li><strong>Approaches</strong>
         <ul>
-          <li>Top-down (memoization)</li>
-          <li>Bottom-up (tabulation)</li>
+          <li>Top down (memoization)</li>
+          <li>Bottom up (tabulation)</li>
         </ul>
       </li>
     </ul>
 
-    <h3>DP Example: 0/1 Knapsack (Bottom-Up)</h3>
+    <h3>DP Example: 0/1 Knapsack (Bottom Up)</h3>
     <pre><code class="language-cpp">int knapsack(const std::vector&lt;int&gt;& w,
              const std::vector&lt;int&gt;& v,
              int W) {
@@ -500,13 +500,13 @@ int max_non_overlapping(std::vector&lt;Interval&gt; intervals) {
         <p>Given text T and pattern P, find all occurrences of P in T.</p>
       </li>
       <li><strong>Naive algorithm</strong>
-        <p>Try aligning P at each position in T → O(nm) worst case.</p>
+        <p>Try aligning P at each position in T -> O(nm) worst case.</p>
       </li>
       <li><strong>Better algorithms</strong>
         <ul>
-          <li><strong>KMP (Knuth-Morris-Pratt)</strong>: builds prefix-function, O(n + m).</li>
-          <li><strong>Boyer-Moore / Boyer-Moore-Horspool</strong>: skips ahead using character heuristics, good in practice.</li>
-          <li><strong>Aho-Corasick</strong>: multi-pattern matching, builds automaton (trie + failure links).</li>
+          <li><strong>KMP (Knuth Morris Pratt)</strong>: builds prefix function, O(n + m).</li>
+          <li><strong>Boyer Moore / Boyer Moore Horspool</strong>: skips ahead using character heuristics, good in practice.</li>
+          <li><strong>Aho Corasick</strong>: multi pattern matching, builds automaton (trie + failure links).</li>
         </ul>
       </li>
     </ul>
@@ -569,7 +569,7 @@ std::vector&lt;int&gt; kmp_search(
     return pos;
 }</code></pre>
 
-    <h2>Intro to NP, NP-Complete, NP-Hard</h2>
+    <h2>Intro to NP, NP Complete, NP Hard</h2>
     <ul>
       <li><strong>P</strong>
         <p>Class of decision problems solvable in polynomial time by a deterministic machine.</p>
@@ -580,15 +580,15 @@ std::vector&lt;int&gt; kmp_search(
           given a certificate (or solvable in poly time by a nondeterministic machine).
         </p>
       </li>
-      <li><strong>NP-Complete</strong>
+      <li><strong>NP Complete</strong>
         <p>
           Hardest problems in NP: every NP problem can be reduced to them in polynomial time,
-          and they are themselves in NP (e.g. SAT, 3-SAT, Clique, Hamiltonian path).
+          and they are themselves in NP (SAT, 3-SAT, Clique, Hamiltonian path).
         </p>
       </li>
-      <li><strong>NP-Hard</strong>
+      <li><strong>NP Hard</strong>
         <p>
-          At least as hard as NP-complete, but not necessarily in NP (may not even have
+          At least as hard as NP complete, but not necessarily in NP (may not even have
           efficiently verifiable certificates).
         </p>
       </li>
@@ -598,19 +598,19 @@ std::vector&lt;int&gt; kmp_search(
       <li><strong>Reductions</strong>
         <p>
           Show problem A is at least as hard as B by transforming instances of B into
-          instances of A in polynomial time. Used to prove NP-completeness.
+          instances of A in polynomial time. Used to prove NP completeness.
         </p>
       </li>
     </ul>
 
     <h2>Takeaways</h2>
     <ul>
-      <li><strong>Sorting</strong>: Know insertion sort (concept), mergesort, quicksort, heapsort and their <em>time/space</em> trade-offs.</li>
+      <li><strong>Sorting</strong>: Know insertion sort (concept), mergesort, quicksort, heapsort and their <em>time/space</em> trade offs.</li>
       <li><strong>Graphs</strong>: Comfort with BFS/DFS, Dijkstra, topological sort, and basic representations.</li>
-      <li><strong>MST + unionfind</strong>: Kruskal uses unionfind; Prim is an alternative based on greedy expansion.</li>
+      <li><strong>MST + unionfind</strong>: Kruskal uses unionfind, Prim is an alternative based on greedy expansion.</li>
       <li><strong>Greedy vs DP</strong>: Greedy = local choices, DP = explicit subproblem states &amp; transitions.</li>
-      <li><strong>String Matching</strong>: Naive is simple; KMP and BM/BMH/AC matter when performance matters.</li>
-      <li><strong>Complexity &amp; NP</strong>: Understand Big O, recurrences, and the high-level meaning of P, NP, NP-complete.</li>
+      <li><strong>String Matching</strong>: Naive is simple, KMP and BM/BMH/AC matter when performance matters.</li>
+      <li><strong>Complexity &amp; NP</strong>: Understand Big O, recurrences, and the high level meaning of P, NP, NP complete.</li>
     </ul>
 
     <p><a href="../index.html">← Back to blog</a></p>
