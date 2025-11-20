@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Core Algorithms Cheat Sheet: Sorting, Graphs, Greedy, DP, Strings, NP</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header>
+    <h1>Core Algorithms Cheat Sheet: Sorting, Graphs, Greedy, DP, Strings, NP</h1>
+    <p class="date">August 20, 2025</p>
+  </header>
+
+  <main>
+    <p>
+      This post is a compact overview of core algorithms and analysis techniques you’re likely
+      to see in CS courses and interviews:
+      sorting, graphs, union-find and MST, greedy vs dynamic programming, string matching,
+      and a quick intro to NP.
+    </p>
+
+    <h2>Asymptotic Analysis & Techniques</h2>
+    <ul>
+      <li><strong>Big-O, Big-Theta, Big-Omega</strong>
+        <p>
+          Describe how runtime or memory grows with input size <code>n</code>.
+          For algorithms we usually care about worst-case <strong>O(…)</strong>.
+        </p>
+      </li>
+      <li><strong>Common runtimes</strong>
+        <ul>
+          <li>O(1) – constant</li>
+          <li>O(log n) – binary search</li>
+          <li>O(n) – linear scan</li>
+          <li>O(n log n) – good comparison sorts, many divide &amp; conquer algorithms</li>
+          <li>O(n²) – simple nested loops (naive DP, insertion sort worst case)</li>
+          <li>O(2ⁿ), O(n!) – exponential / factorial (brute force subset / permutation search)</li>
+        </ul>
+      </li>
+      <li><strong>Recurrences</strong>
+        <p>
+          Divide &amp; conquer algorithms are often expressed as recurrences, e.g.
+          <code>T(n) = 2T(n/2) + O(n)</code> for mergesort, solved using the Master theorem.
+        </p>
+      </li>
+      <li><strong>Amortized analysis</strong>
+        <p>
+          Average cost per operation over a sequence, even if single operations may be expensive
+          (example: dynamic array resize, union-find path compression).
+        </p>
+      </li>
+    </ul>
+
+    <h2>Sorting Algorithms</h2>
+
+    <h3>Insertion Sort</h3>
+    <ul>
+      <li><strong>Idea</strong>
+        <p>
+          Build the sorted array one element at a time by inserting each element into the
+          already-sorted prefix.
+        </p>
+      </li>
+      <li><strong>Complexity</strong>
+        <ul>
+          <li>Best: O(n) (already sorted)</li>
+          <li>Average/Worst: O(n²)</li>
+          <li>In-place, stable</li>
+        </ul>
+      </li>
+      <li><strong>C++ example</strong></li>
+    </ul>
+    <pre><code class="language-cpp">void insertion_sort(std::vector&lt;int&gt;& v) {
+    int n = (int)v.size();
+    for (int i = 1; i &lt; n; ++i) {
+        int key = v[i];
+        int j = i - 1;
+        while (j &gt;= 0 &amp;&amp; v[j] &gt; key) {
+            v[j + 1] = v[j];
+            --j;
+        }
+        v[j + 1] = key;
+    }
+}</code></pre>
+
+    <h3>Mergesort</h3>
+    <ul>
+      <li><strong>Idea</strong>
+        <p>
+          Divide array into halves, sort each half recursively, then merge two sorted halves.
+        </p>
+      </li>
+      <li><strong>Complexity</strong>
+        <ul>
+          <li>Always O(n log n)</li>
+          <li>Stable, not in-place (needs O(n) extra space)</li>
+        </ul>
+      </li>
+    </ul>
+    <pre><code class="language-cpp">void merge(std::vector&lt;int&gt;& a, int l, int m, int r) {
+    std::vector&lt;int&gt; tmp;
+    int i = l, j = m + 1;
+    while (i &lt;= m &amp;&amp; j &lt;= r) {
+        if (a[i] &lt;= a[j]) tmp.push_back(a[i++]);
+        else              tmp.push_back(a[j++]);
+    }
+    while (i &lt;= m) tmp.push_back(a[i++]);
+    while (j &lt;= r) tmp.push_back(a[j++]);
+    for (int k = 0; k &lt; (int)tmp.size(); ++k) {
+        a[l + k] = tmp[k];
+    }
+}
+
+void mergesort(std::vector&lt;int&gt;& a, int l, int r) {
+    if (l &gt;= r) return;
+    int m = l + (r - l) / 2;
+    mergesort(a, l, m);
+    mergesort(a, m + 1, r);
+    merge(a, l, m, r);
+}</code></pre>
+
+    <h3>Quicksort</h3>
+    <ul>
+      <li><strong>Idea</strong>
+        <p>
+          Choose a pivot, partition array into &lt; pivot and &gt;= pivot, recursively sort partitions.
+        </p>
+      </li>
+      <li><strong>Complexity</strong>
+        <ul>
+          <li>Average: O(n log n)</li>
+          <li>Worst: O(n²) (bad pivot choices, e.g. sorted input with naive pivot)</li>
+          <li>In-place, not stable; great constants → used in practice</li>
+        </ul>
+      </li>
+    </ul>
+    <pre><code class="language-cpp">int partition(std::vector&lt;int&gt;& a, int l, int r) {
+    int pivot = a[r];
+    int i = l;
+    for (int j = l; j &lt; r; ++j) {
+        if (a[j] &lt; pivot) {
+            std::swap(a[i], a[j]);
+            ++i;
+        }
+    }
+    std::swap(a[i], a[r]);
+    return i;
+}
+
+void quicksort(std::vector&lt;int&gt;& a, int l, int r) {
+    if (l &gt;= r) return;
+    int p = partition(a, l, r);
+    quicksort(a, l, p - 1);
+    quicksort(a, p + 1, r);
+}</code></pre>
+
+    <h3>Heapsort</h3>
+    <ul>
+      <li><strong>Idea</strong>
+        <p>
+          Build a max-heap from the array, repeatedly extract the maximum to the end.
+        </p>
+      </li>
+      <li><strong>Complexity</strong>
+        <ul>
+          <li>O(n log n) worst-case</li>
+          <li>In-place, not stable</li>
+        </ul>
+      </li>
+    </ul>
+    <pre><code class="language-cpp">void heapify(std::vector&lt;int&gt;& a, int n, int i) {
+    int largest = i;
+    int L = 2 * i + 1, R = 2 * i + 2;
+    if (L &lt; n &amp;&amp; a[L] &gt; a[largest]) largest = L;
+    if (R &lt; n &amp;&amp; a[R] &gt; a[largest]) largest = R;
+    if (largest != i) {
+        std::swap(a[i], a[largest]);
+        heapify(a, n, largest);
+    }
+}
+
+void heapsort(std::vector&lt;int&gt;& a) {
+    int n = (int)a.size();
+    for (int i = n / 2 - 1; i &gt;= 0; --i)
+        heapify(a, n, i);
+    for (int i = n - 1; i &gt; 0; --i) {
+        std::swap(a[0], a[i]);
+        heapify(a, i, 0);
+    }
+}</code></pre>
+
+    <h2>Graphs &amp; Traversals</h2>
+    <ul>
+      <li><strong>Representation</strong>
+        <ul>
+          <li>Adjacency list: <code>vector&lt;vector&lt;int&gt;&gt;</code> – good for sparse graphs.</li>
+          <li>Adjacency matrix: <code>vector&lt;vector&lt;bool&gt;&gt;</code> – simple, but O(n²) memory.</li>
+        </ul>
+      </li>
+      <li><strong>BFS (Breadth-First Search)</strong>
+        <p>
+          Level-by-level traversal using a queue. Finds shortest path in unweighted graphs.
+        </p>
+      </li>
+      <li><strong>DFS (Depth-First Search)</strong>
+        <p>
+          Goes as deep as possible along each branch using recursion or a stack.
+          Used for cycle detection, topological sort, connected components.
+        </p>
+      </li>
+    </ul>
+
+    <h3>BFS Example (Shortest Path in Unweighted Graph)</h3>
+    <pre><code class="language-cpp">std::vector&lt;int&gt; bfs_shortest_paths(
+    const std::vector&lt;std::vector&lt;int&gt;&gt;& adj, int start) {
+
+    int n = (int)adj.size();
+    std::vector&lt;int&gt; dist(n, -1);
+    std::queue&lt;int&gt; q;
+    dist[start] = 0;
+    q.push(start);
+
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int v : adj[u]) {
+            if (dist[v] == -1) {
+                dist[v] = dist[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+    return dist;
+}</code></pre>
+
+    <h2>Dijkstra's Algorithm (Shortest Path)</h2>
+    <ul>
+      <li><strong>Use case</strong>
+        <p>
+          Single-source shortest paths on a weighted graph with non-negative edge weights.
+        </p>
+      </li>
+      <li><strong>Complexity</strong>
+        <ul>
+          <li>Using binary heap (priority queue): O((V + E) log V)</li>
+        </ul>
+      </li>
+      <li><strong>Key idea</strong>
+        <p>
+          Greedily expand the node with the smallest current distance; once popped from the
+          priority queue, its distance is final.
+        </p>
+      </li>
+    </ul>
+    <pre><code class="language-cpp">using Edge = std::pair&lt;int,int&gt;; // (neighbor, weight)
+
+std::vector&lt;int&gt; dijkstra(
+    const std::vector&lt;std::vector&lt;Edge&gt;&gt;& adj, int src) {
+
+    const int INF = 1e9;
+    int n = (int)adj.size();
+    std::vector&lt;int&gt; dist(n, INF);
+    dist[src] = 0;
+
+    using State = std::pair&lt;int,int&gt;; // (dist, node)
+    std::priority_queue&lt;State, std::vector&lt;State&gt;,
+                        std::greater&lt;State&gt;&gt; pq;
+    pq.push({0, src});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top(); pq.pop();
+        if (d != dist[u]) continue; // stale
+        for (auto [v, w] : adj[u]) {
+            if (dist[v] &gt; dist[u] + w) {
+                dist[v] = dist[u] + w;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+    return dist;
+}</code></pre>
+
+    <h2>Union-Find (Disjoint Set Union, DSU)</h2>
+    <ul>
+      <li><strong>Purpose</strong>
+        <p>
+          Maintain a collection of disjoint sets with two main operations:
+          <code>find(x)</code> (which set?) and <code>union(x,y)</code> (merge sets).
+          Used heavily in Kruskal's MST algorithm.
+        </p>
+      </li>
+      <li><strong>Optimizations</strong>
+        <ul>
+          <li><strong>Path compression</strong> in <code>find()</code></li>
+          <li><strong>Union by rank/size</strong></li>
+          <li>Amortized almost O(1) per operation</li>
+        </ul>
+      </li>
+    </ul>
+    <pre><code class="language-cpp">struct DSU {
+    std::vector&lt;int&gt; parent, sz;
+
+    DSU(int n) : parent(n), sz(n, 1) {
+        std::iota(parent.begin(), parent.end(), 0);
+    }
+
+    int find(int x) {
+        if (parent[x] != x)
+            parent[x] = find(parent[x]); // path compression
+        return parent[x];
+    }
+
+    bool unite(int a, int b) {
+        a = find(a); b = find(b);
+        if (a == b) return false;
+        if (sz[a] &lt; sz[b]) std::swap(a, b);
+        parent[b] = a;
+        sz[a] += sz[b];
+        return true;
+    }
+};</code></pre>
+
+    <h2>Minimum Spanning Trees (MST)</h2>
+    <p>
+      For a connected, weighted, undirected graph, an MST is a subset of edges connecting
+      all vertices with minimum total weight and no cycles.
+    </p>
+
+    <h3>Kruskal's Algorithm (with Union-Find)</h3>
+    <ul>
+      <li><strong>Idea</strong>
+        <ol>
+          <li>Sort all edges by weight.</li>
+          <li>Process edges from smallest to largest.</li>
+          <li>Add an edge if it connects two different components (no cycle), using union-find.</li>
+        </ol>
+      </li>
+      <li><strong>Complexity</strong>
+        <p>O(E log E) due to sorting; union-find operations are almost O(1).</p>
+      </li>
+    </ul>
+    <pre><code class="language-cpp">struct Edge {
+    int u, v, w;
+};
+
+int kruskal(int n, std::vector&lt;Edge&gt; edges) {
+    std::sort(edges.begin(), edges.end(),
+              [](const Edge&amp; a, const Edge&amp; b) {
+        return a.w &lt; b.w;
+    });
+
+    DSU dsu(n);
+    int total = 0;
+    for (auto &e : edges) {
+        if (dsu.unite(e.u, e.v)) {
+            total += e.w;
+        }
+    }
+    return total;
+}</code></pre>
+
+    <h3>Prim's Algorithm (Alternative MST)</h3>
+    <ul>
+      <li><strong>Idea</strong>
+        <p>
+          Start from any node, always add the cheapest edge that connects the current tree
+          to a new vertex (greedy, like Dijkstra but with edge weights only).
+        </p>
+      </li>
+      <li><strong>Complexity</strong>
+        <p>O((V + E) log V) with a heap.</p>
+      </li>
+    </ul>
+
+    <h2>Topological Sort</h2>
+    <ul>
+      <li><strong>Use case</strong>
+        <p>
+          Ordering of vertices in a directed acyclic graph (DAG) so every edge u→v
+          goes from earlier to later in the order.
+        </p>
+      </li>
+      <li><strong>Applications</strong>
+        <p>Task scheduling with dependencies, resolving build order, etc.</p>
+      </li>
+      <li><strong>Algorithms</strong>
+        <ul>
+          <li>DFS-based: push node to list after exploring all neighbors, then reverse list.</li>
+          <li>Kahn’s algorithm: repeatedly remove nodes with in-degree 0.</li>
+        </ul>
+      </li>
+    </ul>
+    <pre><code class="language-cpp">// Kahn's algorithm
+std::vector&lt;int&gt; topo_sort(const std::vector&lt;std::vector&lt;int&gt;&gt;& adj) {
+    int n = (int)adj.size();
+    std::vector&lt;int&gt; indeg(n, 0);
+    for (int u = 0; u &lt; n; ++u)
+        for (int v : adj[u])
+            ++indeg[v];
+
+    std::queue&lt;int&gt; q;
+    for (int i = 0; i &lt; n; ++i)
+        if (indeg[i] == 0) q.push(i);
+
+    std::vector&lt;int&gt; order;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        order.push_back(u);
+        for (int v : adj[u]) {
+            if (--indeg[v] == 0)
+                q.push(v);
+        }
+    }
+    // If order.size() &lt; n, graph had a cycle
+    return order;
+}</code></pre>
+
+    <h2>Greedy Algorithms</h2>
+    <ul>
+      <li><strong>Key idea</strong>
+        <p>
+          At each step, pick the locally optimal choice and hope it leads to a global optimum.
+          Correctness usually proven using "greedy choice" and "optimal substructure".
+        </p>
+      </li>
+      <li><strong>Examples</strong>
+        <ul>
+          <li>Interval scheduling (select maximum number of non-overlapping intervals).</li>
+          <li>Activity selection, Huffman coding, MST (Kruskal, Prim), Dijkstra.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h3>Greedy Example: Interval Scheduling</h3>
+    <p>Choose maximum number of non-overlapping intervals by sorting by end time.</p>
+    <pre><code class="language-cpp">struct Interval {
+    int start, end;
+};
+
+int max_non_overlapping(std::vector&lt;Interval&gt; intervals) {
+    std::sort(intervals.begin(), intervals.end(),
+              [](const Interval&amp; a, const Interval&amp; b) {
+        return a.end &lt; b.end;
+    });
+
+    int count = 0;
+    int last_end = std::numeric_limits&lt;int&gt;::min();
+    for (auto &iv : intervals) {
+        if (iv.start &gt;= last_end) {
+            ++count;
+            last_end = iv.end;
+        }
+    }
+    return count;
+}</code></pre>
+
+    <h2>Dynamic Programming (DP)</h2>
+    <ul>
+      <li><strong>Key ideas</strong>
+        <ul>
+          <li>Optimal substructure: optimal solution is composed of optimal sub-solutions.</li>
+          <li>Overlapping subproblems: same subproblems appear many times.</li>
+        </ul>
+      </li>
+      <li><strong>Patterns</strong>
+        <ul>
+          <li>1D DP (e.g., Fibonacci, LIS length).</li>
+          <li>2D DP (e.g., edit distance, knapsack, DP on grid).</li>
+        </ul>
+      </li>
+      <li><strong>Approaches</strong>
+        <ul>
+          <li>Top-down (memoization)</li>
+          <li>Bottom-up (tabulation)</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h3>DP Example: 0/1 Knapsack (Bottom-Up)</h3>
+    <pre><code class="language-cpp">int knapsack(const std::vector&lt;int&gt;& w,
+             const std::vector&lt;int&gt;& v,
+             int W) {
+    int n = (int)w.size();
+    std::vector&lt;std::vector&lt;int&gt;&gt; dp(n + 1, std::vector&lt;int&gt;(W + 1, 0));
+
+    for (int i = 1; i &lt;= n; ++i) {
+        for (int cap = 0; cap &lt;= W; ++cap) {
+            dp[i][cap] = dp[i - 1][cap]; // skip item
+            if (cap - w[i - 1] &gt;= 0) {
+                dp[i][cap] = std::max(dp[i][cap],
+                                      dp[i - 1][cap - w[i - 1]] + v[i - 1]);
+            }
+        }
+    }
+    return dp[n][W];
+}</code></pre>
+
+    <h2>String Matching</h2>
+    <ul>
+      <li><strong>Problem</strong>
+        <p>Given text T and pattern P, find all occurrences of P in T.</p>
+      </li>
+      <li><strong>Naive algorithm</strong>
+        <p>Try aligning P at each position in T → O(nm) worst case.</p>
+      </li>
+      <li><strong>Better algorithms</strong>
+        <ul>
+          <li><strong>KMP (Knuth–Morris–Pratt)</strong>: builds prefix-function, O(n + m).</li>
+          <li><strong>Boyer–Moore / Boyer–Moore–Horspool</strong>: skips ahead using character heuristics, good in practice.</li>
+          <li><strong>Aho–Corasick</strong>: multi-pattern matching, builds automaton (trie + failure links).</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h3>Naive String Matching</h3>
+    <pre><code class="language-cpp">std::vector&lt;int&gt; find_naive(
+    const std::string&amp; text, const std::string&amp; pat) {
+
+    std::vector&lt;int&gt; pos;
+    int n = (int)text.size();
+    int m = (int)pat.size();
+    for (int i = 0; i + m &lt;= n; ++i) {
+        int j = 0;
+        while (j &lt; m &amp;&amp; text[i + j] == pat[j]) {
+            ++j;
+        }
+        if (j == m) pos.push_back(i);
+    }
+    return pos;
+}</code></pre>
+
+    <h3>KMP Prefix Function</h3>
+    <pre><code class="language-cpp">std::vector&lt;int&gt; build_lps(const std::string&amp; pat) {
+    int m = (int)pat.size();
+    std::vector&lt;int&gt; lps(m, 0);
+    int len = 0;
+    for (int i = 1; i &lt; m; ) {
+        if (pat[i] == pat[len]) {
+            lps[i++] = ++len;
+        } else if (len &gt; 0) {
+            len = lps[len - 1];
+        } else {
+            lps[i++] = 0;
+        }
+    }
+    return lps;
+}
+
+std::vector&lt;int&gt; kmp_search(
+    const std::string&amp; text, const std::string&amp; pat) {
+
+    std::vector&lt;int&gt; pos;
+    if (pat.empty()) return pos;
+
+    auto lps = build_lps(pat);
+    int i = 0, j = 0;
+    while (i &lt; (int)text.size()) {
+        if (text[i] == pat[j]) {
+            ++i; ++j;
+            if (j == (int)pat.size()) {
+                pos.push_back(i - j);
+                j = lps[j - 1];
+            }
+        } else if (j &gt; 0) {
+            j = lps[j - 1];
+        } else {
+            ++i;
+        }
+    }
+    return pos;
+}</code></pre>
+
+    <h2>Intro to NP, NP-Complete, NP-Hard</h2>
+    <ul>
+      <li><strong>P</strong>
+        <p>Class of decision problems solvable in polynomial time by a deterministic machine.</p>
+      </li>
+      <li><strong>NP</strong>
+        <p>
+          Class of decision problems whose “yes” solutions can be verified in polynomial time
+          given a certificate (or solvable in poly time by a nondeterministic machine).
+        </p>
+      </li>
+      <li><strong>NP-Complete</strong>
+        <p>
+          Hardest problems in NP: every NP problem can be reduced to them in polynomial time,
+          and they are themselves in NP (e.g. SAT, 3-SAT, Clique, Hamiltonian path).
+        </p>
+      </li>
+      <li><strong>NP-Hard</strong>
+        <p>
+          At least as hard as NP-complete, but not necessarily in NP (may not even have
+          efficiently verifiable certificates).
+        </p>
+      </li>
+      <li><strong>P vs NP</strong>
+        <p>Open problem: is P = NP or P ≠ NP? We don’t know.</p>
+      </li>
+      <li><strong>Reductions</strong>
+        <p>
+          Show problem A is at least as hard as B by transforming instances of B into
+          instances of A in polynomial time. Used to prove NP-completeness.
+        </p>
+      </li>
+    </ul>
+
+    <h2>Takeaways</h2>
+    <ul>
+      <li><strong>Sorting</strong>: Know insertion sort (concept), mergesort, quicksort, heapsort and their <em>time/space</em> trade-offs.</li>
+      <li><strong>Graphs</strong>: Comfort with BFS/DFS, Dijkstra, topological sort, and basic representations.</li>
+      <li><strong>MST + Union-Find</strong>: Kruskal uses union-find; Prim is an alternative based on greedy expansion.</li>
+      <li><strong>Greedy vs DP</strong>: Greedy = local choices, DP = explicit subproblem states &amp; transitions.</li>
+      <li><strong>String Matching</strong>: Naive is simple; KMP and BM/BMH/AC matter when performance matters.</li>
+      <li><strong>Complexity &amp; NP</strong>: Understand big-O, recurrences, and the high-level meaning of P, NP, NP-complete.</li>
+    </ul>
+
+    <p><a href="../index.html">← Back to blog</a></p>
+  </main>
+</body>
+</html>
