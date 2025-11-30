@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Computer Networks Lesson 1.1: What Is the Internet?</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <header>
+    <h1>Computer Networks Lesson 1.1: What Is the Internet?</h1>
+    <p class="date">November 29, 2025</p>
+  </header>
+
+  <main>
+    <p>
+      computer networks and the Internet:
+      what the Internet is, what a protocol is, the idea of edge vs core, basic performance concepts
+      (delay, loss, throughput), layers, security.
+      This is just a brief intro before all the math and algorithms.
+    </p>
+
+    <h2>1. Big Picture: What Is the Internet?</h2>
+
+    <pre><code>view of "network of networks"
+
+ [Home Net]    [Campus Net]   [Mobile Net]
+     |              |              |
+     +-------+------+--------------+
+             |
+          [ ISP ]
+             |
+      +------+------+------+
+      |      |      |      |
+ [Content][Cloud][More][Other]
+  Provider  DCs   ISPs Networks
+</code></pre>
+
+    <ul>
+      <li><strong>"Network of networks"</strong>
+        <p>The Internet is not one single giant computer. It is many different networks connected together:</p>
+        <ul>
+          <li>Home networks (your WiFi router, phone, laptop, smart TV).</li>
+          <li>Campus / enterprise networks (university, offices, labs).</li>
+          <li>Mobile networks (4G, 5G towers and core networks).</li>
+          <li>Internet Service Providers (ISPs) that connect all these smaller networks.</li>
+          <li>Large content / datacenter networks (Google, Netflix, AWS, etc.).</li>
+        </ul>
+      </li>
+
+      <li><strong>Billions of devices</strong>
+        <ul>
+          <li>Traditional: PCs, laptops, servers, phones, tablets.</li>
+          <li>IoT: smart fridges, light bulbs, doorbells, watches, cars.</li>
+          <li>All of these are called <em>hosts</em> or <em>end systems</em>.</li>
+        </ul>
+      </li>
+
+      <li><strong>Routers and links in between</strong>
+        <p>The "roads" and "junctions" of the Internet:</p>
+        <ul>
+          <li><strong>Links</strong> -> physical connections (fiber, copper, radio waves).</li>
+          <li><strong>Routers</strong> -> devices that forward packets from one link to another.</li>
+          <li>Hosts send data, routers forward it, the other end receives it.</li>
+        </ul>
+      </li>
+
+      <li><strong>Two viewpoints</strong>
+        <ul>
+          <li>Infrastructure view: lots of cables, routers, data centers.</li>
+          <li>Services view: web, email, streaming, games, social media.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>2. Internet as a Service Platform</h2>
+
+    <pre><code>view of app talking over Internet
+
+ [Browser]          [Mail App]          [Game Client]
+     |                  |                     |
+     +------------------+---------------------+
+                        |
+                     [ Internet ]
+                        |
+     +------------------+---------------------+
+     |                  |                     |
+ [Web Server]      [Mail Server]        [Game Server]
+</code></pre>
+
+    <ul>
+      <li><strong>What services run over the Internet?</strong>
+        <ul>
+          <li>Web browsing (HTTP, HTTPS).</li>
+          <li>Email (SMTP, IMAP, POP3).</li>
+          <li>Video streaming (Netflix, YouTube, Twitch).</li>
+          <li>Voice / video calls (Zoom, Teams, WhatsApp calls).</li>
+          <li>Online games, file sharing, cloud storage, social networks, IoT apps.</li>
+        </ul>
+      </li>
+
+      <li><strong>Programming interface for applications</strong>
+        <p>The Internet gives applications a set of "hooks" to send and receive data:</p>
+        <ul>
+          <li>Applications open a <em>socket</em> -&gt; send bytes -&gt; receive bytes.</li>
+          <li>They do not have to know all the details of how routers forward packets.</li>
+          <li>Like a very advanced postal service for bits.</li>
+        </ul>
+      </li>
+
+      <li><strong>End systems vs the network</strong>
+        <ul>
+          <li>Applications live and run on <strong>end systems</strong> (hosts).</li>
+          <li>The network's job: move data between hosts as requested.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>3. What Is a Protocol?</h2>
+
+    <pre><code>message exchange example (HTTP)
+
+Client                         Server
+  |                              |
+  |  GET /index.html HTTP/1.1    |
+  |-----------------------------&gt;|
+  |                              |
+  |   HTTP/1.1 200 OK            |
+  |   &lt;html&gt;...&lt;/html&gt;           |
+  |&lt;-----------------------------|
+  |                              |
+</code></pre>
+
+    <ul>
+      <li><strong>Everyday human protocols</strong>
+        <p>We already follow "protocols" in real life:</p>
+        <ul>
+          <li>Greeting protocol:
+            <ul>
+              <li>A: "Hi, I am Big J."</li>
+              <li>B: "Nice to meet you, I am Gregger Chan."</li>
+            </ul>
+          </li>
+          <li>Restaurant ordering protocol:
+            <ul>
+              <li>Read menu -&gt; call waiter -&gt; say order -&gt; receive food -&gt; pay.</li>
+            </ul>
+          </li>
+          <li>Class Q&amp;A protocol:
+            <ul>
+              <li>Raise hand -&gt; wait to be called -&gt; ask question -&gt; listen to answer.</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+
+      <li><strong>General definition</strong>
+        <p>
+          A <strong>protocol</strong> is a set of rules that defines:
+        </p>
+        <ul>
+          <li>What messages are sent.</li>
+          <li>In what order they are sent and received.</li>
+          <li>What to do when a message is received or when timeouts happen.</li>
+        </ul>
+      </li>
+
+      <li><strong>Network protocols</strong>
+        <p>Same idea, but for machines talking to each other:</p>
+        <ul>
+          <li><strong>HTTP</strong>: how browsers and web servers talk.</li>
+          <li><strong>TCP</strong>: reliable, ordered delivery of data between hosts.</li>
+          <li><strong>IP</strong>: addressing and forwarding packets across networks.</li>
+          <li><strong>DNS</strong>: translating names (for example, example.com) to IP addresses.</li>
+          <li><strong>Wi-Fi / 4G / 5G / Ethernet</strong>: how devices talk over the local link.</li>
+        </ul>
+      </li>
+
+      <li><strong>Mini example: HTTP</strong>
+        <pre><code>Client  -&gt;  Server:  GET /index.html HTTP/1.1
+Server  -&gt;  Client:  HTTP/1.1 200 OK
+                 &lt;html&gt;...page content...&lt;/html&gt;
+</code></pre>
+        <ul>
+          <li>Both sides must follow the same "script" (protocol) to understand each other.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>4. Network Edge: Hosts and Access Networks</h2>
+
+    <pre><code>view of edge and access
+
+ [Laptop]   [Phone]   [Smart TV]
+     |         |          |
+   (Wi-Fi / Ethernet at home)
+     |         |          |
+        [Home Router]
+              |
+            [ ISP Access ]
+</code></pre>
+
+    <ul>
+      <li><strong>Hosts / end systems</strong>
+        <ul>
+          <li>Laptops, phones, desktops, servers, IoT devices.</li>
+          <li>Where applications run (web browsers, games, mail servers, etc.).</li>
+        </ul>
+      </li>
+
+      <li><strong>Client-server model</strong>
+        <ul>
+          <li><strong>Client</strong> -> initiates contact.
+            <ul>
+              <li>Example: your browser sending an HTTP request.</li>
+            </ul>
+          </li>
+          <li><strong>Server</strong> -> waits for incoming requests.
+            <ul>
+              <li>Example: web server hosting a site.</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+
+      <li><strong>Access networks</strong> (how you connect to ISP)
+        <ul>
+          <li>Home:
+            <ul>
+              <li>Fiber to the home, cable, DSL.</li>
+              <li>WiFi from your home router to your devices.</li>
+            </ul>
+          </li>
+          <li>Campus / office:
+            <ul>
+              <li>Ethernet (wired), enterprise WiFi.</li>
+            </ul>
+          </li>
+          <li>Mobile:
+            <ul>
+              <li>4G/5G base stations, SIM card, mobile core network.</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+
+      <li><strong>Physical media</strong>
+        <ul>
+          <li>Copper (twisted pair, coaxial cable).</li>
+          <li>Optical fiber (high speed, long distance).</li>
+          <li>Radio (WiFi, cellular, satellite).</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>5. Network Core: Routers and Switching</h2>
+
+    <pre><code>mesh of routers
+
+        [R1]------[R2]------[R3]
+         |         |          |
+        [R4]------[R5]------[R6]
+         |                    |
+      [Edge A]             [Edge B]
+       (host)               (host)
+</code></pre>
+
+    <ul>
+      <li><strong>Network core = mesh of routers</strong>
+        <ul>
+          <li>Routers interconnect multiple links.</li>
+          <li>Packets hop from router to router until they reach the destination.</li>
+        </ul>
+      </li>
+
+      <li><strong>Forwarding packets</strong>
+        <ul>
+          <li>Each packet has a destination address (IP address).</li>
+          <li>The router looks at the destination, chooses an outgoing link, and forwards it.</li>
+          <li>This happens many times along the path: host -&gt; router -&gt; router -&gt; ... -&gt; host.</li>
+        </ul>
+      </li>
+
+      <li><strong>Packet switching vs circuit switching (high level)</strong>
+        <pre><code>Packet switching (Internet style):
+
+[Host A]
+   |
+ [Rtr]---[Rtr]---[Rtr]---[Host B]
+   Many flows share these links
+
+Circuit switching (telephone style):
+
+[Host A]===[Reserved path]===[Host B]
+   Dedicated bandwidth for 1 call
+</code></pre>
+        <ul>
+          <li><strong>Packet switching</strong>:
+            <ul>
+              <li>Data is broken into small units (packets).</li>
+              <li>Links are shared by many users.</li>
+              <li>Efficient utilization, but possible congestion and delay.</li>
+            </ul>
+          </li>
+          <li><strong>Circuit switching</strong>:
+            <ul>
+              <li>Reserves a dedicated path and bandwidth for each call.</li>
+              <li>Predictable performance but can be wasteful if the line is idle.</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>6. Performance: Delay, Loss, Throughput</h2>
+
+    <pre><code>timeline for delay
+
+Time axis -&gt;
+[Host]----(processing)----[Rtr1]--(queue)--[Rtr2]--(propagation)--[Dest]
+
+processing delay: at each router / host
+queuing delay  : waiting in buffer
+transmission   : pushing bits on link
+propagation    : signal travel time
+</code></pre>
+
+    <ul>
+      <li><strong>Delay (latency)</strong>
+        <p>How long it takes for data to travel from source to destination.</p>
+        <ul>
+          <li><strong>Processing delay</strong> - time to examine the packet header.</li>
+          <li><strong>Queuing delay</strong> - time waiting in router buffers.</li>
+          <li><strong>Transmission delay</strong> - time to push all bits onto the link.</li>
+          <li><strong>Propagation delay</strong> - time for signal to move over the medium.</li>
+        </ul>
+        <p>We often care about end-to-end delay (sum of all these along the path).</p>
+      </li>
+
+      <li><strong>Packet loss</strong>
+        <pre><code>view of buffer overflow
+
+Incoming packets -&gt;
+ [Queue: size 4]
+ [pkt1][pkt2][pkt3][pkt4][ X ]
+                      ^
+                      |
+                  dropped (loss)
+</code></pre>
+        <ul>
+          <li>Routers have limited buffer space.</li>
+          <li>If too many packets arrive too quickly, buffers overflow.</li>
+          <li>Overflowed packets are dropped. This is packet loss.</li>
+          <li>Protocols like TCP react by retransmitting and slowing down.</li>
+        </ul>
+      </li>
+
+      <li><strong>Throughput</strong>
+        <pre><code>bottleneck example
+
+   100 Mbps         10 Mbps          100 Mbps
+[Host]----[Link]----[Link]----[Link]----[Host]
+              ^
+              |
+        bottleneck link
+        (max throughput)
+</code></pre>
+        <ul>
+          <li>Rate at which data is successfully delivered, in bits per second (bps).</li>
+          <li>Examples:
+            <ul>
+              <li>Home Internet: 100 Mbps down, 20 Mbps up.</li>
+              <li>Data center links: 10 Gbps, 40 Gbps, 100 Gbps, etc.</li>
+            </ul>
+          </li>
+          <li>Throughput can be limited by:
+            <ul>
+              <li>The slowest link along the path (bottleneck).</li>
+              <li>Congestion and retransmissions.</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+
+      <li><strong>User experience vs metrics</strong>
+        <ul>
+          <li>Web browsing: cares about latency (page load time) and throughput (how fast content arrives).</li>
+          <li>Online gaming: latency is critical; a bit of loss is often tolerable.</li>
+          <li>Video streaming: needs enough throughput and not too much sustained loss.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>7. Protocol Layers and Service Models</h2>
+
+    <pre><code>ASCII layer stack (top to bottom)
+
++--------------------------+
+|   Application layer      |
++--------------------------+
+|   Transport layer        |
++--------------------------+
+|   Network layer          |
++--------------------------+
+|   Link layer             |
++--------------------------+
+|   Physical layer         |
++--------------------------+
+
+App uses Transport, which uses Network, etc.
+</code></pre>
+
+    <ul>
+      <li><strong>Why use layers?</strong>
+        <ul>
+          <li>Networking is complex, so we break it into smaller pieces (layers).</li>
+          <li>Each layer:
+            <ul>
+              <li>Uses services from the layer below.</li>
+              <li>Provides services to the layer above.</li>
+            </ul>
+          </li>
+          <li>Internal details of a layer are hidden from others (modularity).</li>
+        </ul>
+      </li>
+
+      <li><strong>Internet protocol stack (5-layer view)</strong>
+        <ol>
+          <li><strong>Application</strong> -> network applications:
+            <ul>
+              <li>HTTP (web), SMTP (email), DNS, etc.</li>
+            </ul>
+          </li>
+          <li><strong>Transport</strong> -> process to process data transfer:
+            <ul>
+              <li>TCP: reliable, ordered, congestion-controlled.</li>
+              <li>UDP: simpler, no guarantees, low overhead.</li>
+            </ul>
+          </li>
+          <li><strong>Network</strong> -> routing of datagrams:
+            <ul>
+              <li>IP: logical addressing, forwarding across networks.</li>
+            </ul>
+          </li>
+          <li><strong>Link</strong> -> data transfer between neighboring network elements:
+            <ul>
+              <li>Ethernet, WiFi, 5G, etc.</li>
+            </ul>
+          </li>
+          <li><strong>Physical</strong> -> bits on the wire, fiber, or air:
+            <ul>
+              <li>Voltages, light pulses, radio signals, etc.</li>
+            </ul>
+          </li>
+        </ol>
+      </li>
+
+      <li><strong>Service models</strong>
+        <ul>
+          <li>Each layer offers a particular service model:
+            <ul>
+              <li>Reliable vs unreliable.</li>
+              <li>Ordered vs unordered.</li>
+              <li>Guaranteed bandwidth vs best effort.</li>
+            </ul>
+          </li>
+          <li>Applications choose what they need (for example, video call vs file transfer).</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>8. Security (Very High Level)</h2>
+
+    <pre><code>attacker view
+
+[Client]----[Internet]----[Server]
+    \                       ^
+     \                      |
+      \--[Attacker sniffs packets]
+
+With HTTPS:
+
+[Client]====encrypted====[Server]
+Attacker sees only ciphertext.
+</code></pre>
+
+    <ul>
+      <li><strong>Original Internet design</strong>
+        <ul>
+          <li>Focused on connectivity, not on security.</li>
+          <li>Assumed mostly trusted academic and research users.</li>
+        </ul>
+      </li>
+
+      <li><strong>Types of threats</strong>
+        <ul>
+          <li><strong>Eavesdropping</strong> -> attacker listens to traffic.</li>
+          <li><strong>Packet tampering</strong> -> attacker modifies packets in transit.</li>
+          <li><strong>Spoofing</strong> -> attacker pretends to be someone else.</li>
+          <li><strong>Denial-of-service (DoS)</strong> -> attacker floods network or host with traffic.</li>
+          <li><strong>Malware</strong> -> viruses, worms, trojans, ransomware.</li>
+        </ul>
+      </li>
+
+      <li><strong>Basic defenses</strong>
+        <ul>
+          <li><strong>Encryption</strong> -> for example, HTTPS (HTTP over TLS) to protect privacy.</li>
+          <li><strong>Authentication</strong> -> passwords, digital certificates.</li>
+          <li><strong>Firewalls</strong> -> filter incoming and outgoing traffic.</li>
+          <li><strong>VPNs</strong> -> secure tunnels over untrusted networks.</li>
+        </ul>
+      </li>
+
+      <li><strong>Security is a cross layer concern</strong>
+        <ul>
+          <li>We must think about security at application, transport, network, and link layers.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>9. A Short History of the Internet</h2>
+
+    <pre><code>ASCII timeline
+
+1960s   1970s      1980s          1990s              2000s+
+ |       |           |              |                   |
+[ARPANET]--packet--&gt;[TCP/IP]--&gt;[Early ISPs]--&gt;[Web boom]--&gt;[Mobile, Cloud, IoT]
+</code></pre>
+
+    <ul>
+      <li><strong>ARPANET (late 1960s to 1970s)</strong>
+        <ul>
+          <li>Early packet switched network funded by the U.S. Department of Defense.</li>
+          <li>Connected a small number of research sites.</li>
+        </ul>
+      </li>
+
+      <li><strong>1970s to 1980s: Birth of TCP/IP</strong>
+        <ul>
+          <li>TCP/IP designed as a flexible, robust protocol suite.</li>
+          <li>Adopted by ARPANET and then many other networks.</li>
+        </ul>
+      </li>
+
+      <li><strong>1990s: Web and commercialization</strong>
+        <ul>
+          <li>Tim Berners-Lee invents the World Wide Web (HTTP, HTML, URLs).</li>
+          <li>Mosaic and Netscape browsers bring the web to the public.</li>
+          <li>ISPs grow, more people connect at home.</li>
+        </ul>
+      </li>
+
+      <li><strong>2000s to now: Broadband, mobile, cloud, IoT</strong>
+        <ul>
+          <li>Always on broadband access, WiFi everywhere.</li>
+          <li>Smartphones: mobile Internet becomes dominant for many users.</li>
+          <li>Cloud computing, large data centers, streaming, social networks.</li>
+          <li>Explosion of Internet connected devices (IoT).</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h2>10. Quick Self Check and Exercises</h2>
+
+    <pre><code>checklist
+
+[ ] 1. Example of a human protocol and a network protocol
+[ ] 2. Difference between network edge and core
+[ ] 3. Three types of delay and what they mean
+[ ] 4. Five layers of Internet stack + one protocol each
+[ ] 5. Draw path from your device to a content provider
+</code></pre>
+
+    <ul>
+      <li><strong>Concept check questions</strong>
+        <ol>
+          <li>Give one example of:
+            <ul>
+              <li>(a) a human protocol, and</li>
+              <li>(b) a network protocol.</li>
+            </ul>
+          </li>
+          <li>Explain the difference between the <strong>network edge</strong> and the <strong>network core</strong>.</li>
+          <li>Name and briefly describe three types of delay that a packet can experience.</li>
+          <li>List the five layers of the Internet protocol stack and one protocol at each layer.</li>
+        </ol>
+      </li>
+
+      <li><strong>Mini activity idea</strong>
+        <ul>
+          <li>Draw a simple diagram of:
+            <ul>
+              <li>Your laptop or phone.</li>
+              <li>Your home WiFi router.</li>
+              <li>Your ISP.</li>
+              <li>A content provider (for example, "Video Site").</li>
+            </ul>
+          </li>
+          <li>Trace the path of a packet when you watch a video:
+            <ul>
+              <li>Which parts are "edge"? Which are "core"?</li>
+              <li>Where can delay and loss happen?</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+
+      <li><strong>Preview of next lessons</strong>
+        <ul>
+          <li>We will dive deeper into:
+            <ul>
+              <li>Packet switching vs circuit switching.</li>
+              <li>Detailed delay and loss analysis.</li>
+              <li>Transport layer protocols like TCP and UDP.</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+
+    <!-- LESSON QUIZ -->
+
+    <h2>11. Lesson 1.1 Quiz</h2>
+
+    <p>
+      short quiz to check your understanding. Some questions have more than one correct answer.
+      Select all that apply and then click "Check Answers".
+    </p>
+
+    <div class="quiz">
+
+      <div class="quiz-question" data-question-id="q1">
+        <h3>Question 1: What is the Internet? (nuts-and-bolts view)</h3>
+        <p>
+          Which of the following descriptions correspond to a "nuts-and-bolts" view of the Internet?
+          Select one or more answers that are correct.
+        </p>
+        <ul>
+          <li>
+            <label>
+              <input type="checkbox" data-correct="true">
+              A collection of billions of computing devices, and packet switches interconnected by links.
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="checkbox" data-correct="false">
+              A place I go for information, entertainment, and to communicate with people.
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="checkbox" data-correct="true">
+              A collection of hardware and software components executing protocols that define the format
+              and the order of messages exchanged between two or more communicating entities, as well as
+              the actions taken on the transmission and receipt of a message or other event.
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="checkbox" data-correct="false">
+              A platform for building network applications.
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="checkbox" data-correct="true">
+              A "network of networks".
+            </label>
+          </li>
+        </ul>
+        <p class="quiz-feedback"></p>
+      </div>
+
+      <div class="quiz-question" data-question-id="q2">
+        <h3>Question 2: What is the Internet? (services view)</h3>
+        <p>
+          Which of the following descriptions correspond to a "services" view of the Internet?
+          Select one or more answers that are correct.
+        </p>
+        <ul>
+          <li>
+            <label>
+              <input type="checkbox" data-correct="true">
+              A platform for building network applications.
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="checkbox" data-correct="false">
+              A "network of networks".
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="checkbox" data-correct="false">
+              A collection of hardware and software components executing protocols that define the format
+              and the order of messages exchanged between communicating entities.
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="checkbox" data-correct="true">
+              A place I go for information, entertainment, and to communicate with people.
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="checkbox" data-correct="false">
+              A collection of billions of computing devices, and packet switches interconnected by links.
+            </label>
+          </li>
+        </ul>
+        <p class="quiz-feedback"></p>
+      </div>
+
+      <div class="quiz-question" data-question-id="q3">
+        <h3>Question 3: What is a protocol?</h3>
+        <p>
+          Which of the following human scenarios involve a protocol? Recall that protocols define the format
+          and order of messages sent and received among network entities, and the actions taken on message
+          transmission and receipt. Select one or more answers that are correct.
+        </p>
+        <ul>
+          <li>
+            <label>
+              <input type="checkbox" data-correct="false">
+              A person reading a book.
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="checkbox" data-correct="false">
+              A person sleeping.
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="checkbox" data-correct="true">
+              A student raising a hand to ask a question, the teacher acknowledging the student,
+              listening to the question, responding with an answer, and thanking the student.
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="checkbox" data-correct="true">
+              Two people introducing themselves to each other.
+            </label>
+          </li>
+          <li>
+            <label>
+              <input type="checkbox" data-correct="true">
+              One person asking, and getting, the time from another person.
+            </label>
+          </li>
+        </ul>
+        <p class="quiz-feedback"></p>
+      </div>
+
+      <button type="button" onclick="checkQuiz()">Check Answers</button>
+      <p id="quiz-score"></p>
+
+    </div>
+
+    <p><a href="../index.html">&lt;- Back to index</a></p>
+  </main>
+
+  <script>
+    function checkQuiz() {
+      var questions = document.querySelectorAll(".quiz-question");
+      var correctCount = 0;
+
+      for (var i = 0; i < questions.length; i++) {
+        var q = questions[i];
+        var checkboxes = q.querySelectorAll('input[type="checkbox"]');
+        var allCorrect = true;
+
+        for (var j = 0; j < checkboxes.length; j++) {
+          var cb = checkboxes[j];
+          var shouldBeChecked = cb.getAttribute("data-correct") === "true";
+
+          if (shouldBeChecked && !cb.checked) {
+            allCorrect = false;
+          }
+          if (!shouldBeChecked && cb.checked) {
+            allCorrect = false;
+          }
+        }
+
+        var feedback = q.querySelector(".quiz-feedback");
+        if (allCorrect) {
+          feedback.textContent = "That is correct!";
+          feedback.className = "quiz-feedback correct";
+          correctCount++;
+        } else {
+          feedback.textContent = "Not quite. Try again.";
+          feedback.className = "quiz-feedback incorrect";
+        }
+      }
+
+      var scoreEl = document.getElementById("quiz-score");
+      scoreEl.textContent = "Score: " + correctCount + " / " + questions.length;
+    }
+  </script>
+</body>
+</html>
